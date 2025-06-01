@@ -8,6 +8,8 @@ class Product {
   final DateTime createdAt;
   final bool isAvailable;
   final String artisanId;
+  final bool isOnPromotion;
+  final double? promotionPercentage;
 
   Product({
     required this.id,
@@ -19,19 +21,47 @@ class Product {
     required this.createdAt,
     required this.isAvailable,
     required this.artisanId,
+    this.isOnPromotion = false,
+    this.promotionPercentage,
   });
 
+  double get discountedPrice {
+    if (!isOnPromotion || promotionPercentage == null) return price;
+    return price * (1 - promotionPercentage! / 100);
+  }
+
   factory Product.fromJson(Map<String, dynamic> json) {
+    final categoryIdField = json['categoryId'];
+    String categoryId;
+    if (categoryIdField is String) {
+      categoryId = categoryIdField;
+    } else if (categoryIdField != null &&
+        categoryIdField.runtimeType.toString().contains('DocumentReference')) {
+      categoryId = categoryIdField.id;
+    } else {
+      categoryId = '';
+    }
     return Product(
       id: json['id'] as String,
-      name: json['name'] as String,
-      description: json['description'] as String,
-      price: (json['price'] as num).toDouble(),
-      categoryId: json['categoryId'] as String,
-      imageUrls: List<String>.from(json['imageUrls'] as List),
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      isAvailable: json['isAvailable'] as bool,
-      artisanId: json['artisanId'] as String,
+      name: json['name'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      price:
+          (json['price'] is int)
+              ? (json['price'] as int).toDouble()
+              : (json['price'] as num?)?.toDouble() ?? 0.0,
+      categoryId: categoryId,
+      imageUrls:
+          (json['imageUrls'] is List)
+              ? List<String>.from(json['imageUrls'])
+              : <String>[],
+      createdAt:
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+          DateTime.now(),
+      isAvailable:
+          json['isAvailable'] is bool ? json['isAvailable'] as bool : true,
+      artisanId: json['artisanId'] as String? ?? '',
+      isOnPromotion: json['isOnPromotion'] as bool? ?? false,
+      promotionPercentage: (json['promotionPercentage'] as num?)?.toDouble(),
     );
   }
 
@@ -46,6 +76,8 @@ class Product {
       'createdAt': createdAt.toIso8601String(),
       'isAvailable': isAvailable,
       'artisanId': artisanId,
+      'isOnPromotion': isOnPromotion,
+      'promotionPercentage': promotionPercentage,
     };
   }
-} 
+}

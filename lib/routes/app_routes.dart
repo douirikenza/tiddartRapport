@@ -1,28 +1,31 @@
 import 'package:get/get.dart';
-import 'package:tiddart/page/cart_page.dart';
-import '../page/chat_page.dart';
-import '../page/favorites_page.dart';
-import '../page/home_page.dart';
-import '../page/login_page.dart';
-import '../page/main_navigation.dart';
-import '../page/payment_page.dart';
-import '../page/pswd_oublie_page.dart';
-import '../page/signup_page.dart';
-import '../page/valid_code_page.dart';
-import '../page/profile_page.dart';
-import '../page/product_details_page.dart';
+import '../page/artisan/add_product_page.dart';
+import '../page/client/cart_page.dart';
+import '../page/client/favorites_page.dart';
+import '../page/client/home_page.dart';
+import '../page/auth/login_page.dart';
+import '../page/client/main_page.dart';
+import '../page/client/payment_page.dart';
+import '../page/auth/pswd_oublie_page.dart';
+import '../page/auth/signup_page.dart';
+import '../page/auth/valid_code_page.dart';
+import '../page/client/profile_page.dart';
+import '../page/client/product_details_page.dart';
+import '../page/client/Product_categories_Page.dart';
+import '../page/client/category_selector_page.dart';
 
-import '../page/Product_categories_Page.dart';
-import '../page/category_selector_page.dart';
-import '../page/cosmetics_page.dart';
-import '../page/decoration_page.dart';
-import '../page/food_page.dart';
-import '../page/promotions_page.dart';
-import '../page/textile_page.dart';
-import '../page/welcome_page.dart';
+
+
+import '../page/client/textile_page.dart';
+import '../page/auth/welcome_page.dart';
 import '../page/artisan/category_management_page.dart';
-import '../page/artisan/product_management_page.dart';
 import '../page/artisan/artisan_dashboard_page.dart';
+import '../page/artisan/artisan_profile_page.dart';
+import '../page/artisan/order_statistics_page.dart';
+import '../page/artisan/category_products_page.dart';
+import '../page/admin/admin_dashboard_page.dart';
+import '../page/admin/category_management_page.dart';
+import '../page/admin/artisan_management_page.dart';
 
 class AppRoutes {
   static const String home = '/';
@@ -32,9 +35,8 @@ class AppRoutes {
   static const String cart = '/cart';
   static const String favorites = '/favorites';
   static const String profile = '/profile';
-  static const String chat = '/chat';
   static const String promotions = '/promotions';
-  static const String mainNavigation = '/mainNavigation';
+  static const String mainPage = '/main';
   static const String paymentPage = '/paymentPage';
   static const String pswdOubliePage = '/pswdOubliePage';
   static const String validCodePage = '/validCodePage';
@@ -47,53 +49,72 @@ class AppRoutes {
   static const String welcome = '/welcome';
   static const String productDetails = '/product-details';
   static const String artisanDashboard = '/artisan/dashboard';
+  static const String adminDashboard = '/admin/dashboard';
+  static const String adminCategoryManagement = '/admin/categories';
+  static const String adminArtisanManagement = '/admin/artisans';
   static const String categoryManagement = '/artisan/categories';
   static const String productManagement = '/artisan/products';
   static const String artisanProfile = '/artisan/profile';
   static const String orderStatistics = '/artisan/statistics';
-  static const String artisanChat = '/artisan/chat';
   static const String forgotPassword = '/forgot-password';
-}
+  static const String artisanCategoryProducts = '/artisan/category/products';
+  static const String addProduct = '/artisan/products/add';
 
-class AppPages {
   static final routes = [
-    GetPage(name: AppRoutes.login, page: () => const LoginPage()),
-    GetPage(name: AppRoutes.signup, page: () => const SignUpPage()),
-    GetPage(name: AppRoutes.home, page: () => HomePage()), // 
-    GetPage(name: AppRoutes.cart, page: () => CartPage()), // 
-    GetPage(name: AppRoutes.favorites, page: () => FavoritesPage()),
-    GetPage(name: AppRoutes.profile, page: () => ProfilePage()),
-    // GetPage(name: AppRoutes.chat, page: () => ChatPage(
-    //   vendorName: Get.arguments['vendorName'] ?? 'Vendeur',
-    // )),
-    GetPage(name: AppRoutes.mainNavigation, page: () => MainNavigation()),
-    GetPage(name: AppRoutes.promotions, page: () => PromotionsPage()),
-    GetPage(name: AppRoutes.pswdOubliePage, page: () => PswdOubliePage()),
-    GetPage(name: AppRoutes.validCodePage, page: () => ValidCodePage()),
-    GetPage(name: AppRoutes.categories, page: () => ProductCategoriesPage()),
-    GetPage(name: AppRoutes.cosmetics, page: () => CosmeticsPage()),
-    GetPage(name: AppRoutes.food, page: () => FoodPage()),
-    GetPage(name: AppRoutes.decoration, page: () => DecorationPage()),
-    GetPage(name: AppRoutes.textile, page: () => TextilePage()),
-    GetPage(name: AppRoutes.categorySelector, page: () => const CategorySelectorPage()),
-    GetPage(name: AppRoutes.welcome, page: () => const WelcomePage()),
+    GetPage(name: login, page: () => const LoginPage()),
+    GetPage(name: signup, page: () => const SignUpPage()),
+    GetPage(name: mainPage, page: () => MainPage()),
+    GetPage(name: cart, page: () => CartPage()),
+    GetPage(name: favorites, page: () => FavoritesPage()),
+    GetPage(name: profile, page: () => const ProfilePage()),
+
+    GetPage(name: pswdOubliePage, page: () => PswdOubliePage()),
+    GetPage(name: validCodePage, page: () => ValidCodePage()),
+    GetPage(name: categories, page: () => ProductCategoriesPage()),
+
+
+    GetPage(name: textile, page: () => TextilePage()),
+    GetPage(name: categorySelector, page: () => const CategorySelectorPage()),
+    GetPage(name: welcome, page: () => const WelcomePage()),
     GetPage(
-      name: AppRoutes.productDetails,
-      page: () => ProductDetailsPage(
-        product: Get.arguments,
-      ),
+      name: productDetails,
+      page:
+          () => ProductDetailsPage(
+            product: Get.arguments['product'],
+            artisanId: Get.arguments['artisanId'],
+          ),
     ),
     GetPage(
-      name: AppRoutes.artisanDashboard,
+      name: artisanDashboard,
       page: () => ArtisanDashboardPage(artisanId: Get.arguments),
     ),
     GetPage(
-      name: AppRoutes.categoryManagement,
-      page: () => CategoryManagementPage(),
+      name: adminDashboard,
+      page: () => AdminDashboardPage(adminId: Get.arguments),
     ),
     GetPage(
-      name: AppRoutes.productManagement,
-      page: () => ProductManagementPage(),
+      name: adminCategoryManagement,
+      page: () => AdminCategoryManagementPage(),
     ),
+    GetPage(
+      name: adminArtisanManagement,
+      page: () => AdminArtisanManagementPage(),
+    ),
+    GetPage(name: categoryManagement, page: () => CategoryManagementPage()),
+
+    GetPage(
+      name: artisanProfile,
+      page: () => ArtisanProfilePage(artisanId: Get.arguments),
+    ),
+    GetPage(name: orderStatistics, page: () => OrderStatisticsPage()),
+    GetPage(
+      name: artisanCategoryProducts,
+      page:
+          () => CategoryProductsPage(
+            categoryId: Get.arguments['categoryId'],
+            artisanId: Get.arguments['artisanId'],
+          ),
+    ),
+    GetPage(name: addProduct, page: () => const AddProductPage()),
   ];
 }

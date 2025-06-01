@@ -63,16 +63,20 @@ class _ArtisanChatPageState extends State<ArtisanChatPage> {
             ),
             Text(
               'En ligne',
-              style: TextStyle(
-                color: Colors.green,
-                fontSize: 12,
-              ),
+              style: TextStyle(color: Colors.green, fontSize: 12),
             ),
           ],
         ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppTheme.primaryBrown),
-          onPressed: () => Get.back(),
+          icon: Icon(Icons.arrow_back_ios, color: AppTheme.primaryBrown),
+          onPressed: () {
+            Navigator.of(context).pop();
+            Get.back();
+          },
+          style: IconButton.styleFrom(
+            backgroundColor: AppTheme.surfaceLight,
+            padding: const EdgeInsets.all(12),
+          ),
         ),
       ),
       body: Column(
@@ -84,7 +88,9 @@ class _ArtisanChatPageState extends State<ArtisanChatPage> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(
                     child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryBrown),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppTheme.primaryBrown,
+                      ),
                     ),
                   );
                 }
@@ -134,7 +140,8 @@ class _ArtisanChatPageState extends State<ArtisanChatPage> {
                     final bool isMe = message.receiverId == widget.artisanId;
 
                     return Align(
-                      alignment: isMe ? Alignment.centerLeft : Alignment.centerRight,
+                      alignment:
+                          isMe ? Alignment.centerLeft : Alignment.centerRight,
                       child: Container(
                         margin: EdgeInsets.only(
                           bottom: 8,
@@ -146,9 +153,8 @@ class _ArtisanChatPageState extends State<ArtisanChatPage> {
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: isMe
-                              ? AppTheme.primaryBrown
-                              : Colors.grey[200],
+                          color:
+                              isMe ? AppTheme.primaryBrown : Colors.grey[200],
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
@@ -184,9 +190,10 @@ class _ArtisanChatPageState extends State<ArtisanChatPage> {
                             Text(
                               _formatTimestamp(message.timestamp),
                               style: TextStyle(
-                                color: isMe
-                                    ? Colors.white.withOpacity(0.7)
-                                    : Colors.black54,
+                                color:
+                                    isMe
+                                        ? Colors.white.withOpacity(0.7)
+                                        : Colors.black54,
                                 fontSize: 10,
                               ),
                             ),
@@ -203,10 +210,7 @@ class _ArtisanChatPageState extends State<ArtisanChatPage> {
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 4,
-                ),
+                BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4),
               ],
             ),
             child: SafeArea(
@@ -259,19 +263,18 @@ class _ArtisanChatPageState extends State<ArtisanChatPage> {
                     Container(
                       margin: const EdgeInsets.only(left: 8),
                       decoration: BoxDecoration(
-                        color: _isComposing
-                            ? AppTheme.primaryBrown
-                            : Colors.grey[300],
+                        color:
+                            _isComposing
+                                ? AppTheme.primaryBrown
+                                : Colors.grey[300],
                         borderRadius: BorderRadius.circular(25),
                       ),
                       child: IconButton(
-                        icon: const Icon(
-                          Icons.send,
-                          color: Colors.white,
-                        ),
-                        onPressed: _isComposing
-                            ? () => _handleSubmitted(_textController.text)
-                            : null,
+                        icon: const Icon(Icons.send, color: Colors.white),
+                        onPressed:
+                            _isComposing
+                                ? () => _handleSubmitted(_textController.text)
+                                : null,
                       ),
                     ),
                   ],
@@ -298,4 +301,4 @@ class _ArtisanChatPageState extends State<ArtisanChatPage> {
       return 'À l\'instant';
     }
   }
-} 
+}

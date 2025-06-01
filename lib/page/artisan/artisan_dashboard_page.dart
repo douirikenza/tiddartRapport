@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:Tiddart/page/artisan/artisan_product_management_page.dart';
 import 'dart:ui' as ui;
 import '../../routes/app_routes.dart';
 import '../../theme/app_theme.dart';
@@ -8,6 +9,11 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'artisan_chat_page.dart';
 import 'artisan_conversations_list.dart';
+import 'category_products_page.dart';
+import '../../controllers/artisan_dashboard_controller.dart';
+import '../../controllers/auth_controller.dart';
+import '../../controllers/order_controller.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 class RevenueData {
   final String day;
@@ -16,93 +22,30 @@ class RevenueData {
   RevenueData(this.day, this.amount);
 }
 
-class ArtisanDashboardPage extends StatefulWidget {
+class ArtisanDashboardPage extends StatelessWidget {
   final String artisanId;
-  
-  const ArtisanDashboardPage({
-    Key? key,
-    required this.artisanId,
-  }) : super(key: key);
 
-  @override
-  State<ArtisanDashboardPage> createState() => _ArtisanDashboardPageState();
-}
-
-class _ArtisanDashboardPageState extends State<ArtisanDashboardPage> with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-  bool _isLoading = false;
-  int _currentIndex = 0;
-  
-  late List<RevenueData> _chartData;
-  final MessageController _messageController = Get.put(MessageController());
-  
-  // Nouvelles animations pour les cartes
-  final List<GlobalKey> _cardKeys = List.generate(4, (index) => GlobalKey());
-  final List<bool> _cardHovered = List.generate(4, (index) => false);
-
-  @override
-  void initState() {
-    super.initState();
-    _initChartData();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    );
-
-    _fadeAnimation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeIn,
-    );
-
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutQuart,
-    ));
-
-    _animationController.forward();
-  }
-
-  void _initChartData() {
-    _chartData = [
-      RevenueData('Lun', 150),
-      RevenueData('Mar', 230),
-      RevenueData('Mer', 180),
-      RevenueData('Jeu', 320),
-      RevenueData('Ven', 260),
-      RevenueData('Sam', 310),
-      RevenueData('Dim', 280),
-    ];
-  }
-
-  Future<void> _refreshData() async {
-    setState(() {
-      _isLoading = true;
-    });
-    
-    // Simuler un chargement
-    await Future.delayed(const Duration(seconds: 1));
-    
-    setState(() {
-      _isLoading = false;
-    });
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
+  const ArtisanDashboardPage({Key? key, required this.artisanId})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final ArtisanDashboardController controller = Get.put(
+      ArtisanDashboardController(),
+    );
+    final AuthController authController = Get.find<AuthController>();
+    final MessageController _messageController = Get.put(MessageController());
+    final OrderController orderController = Get.find<OrderController>();
+    final String currentArtisanId =
+        artisanId.isNotEmpty ? artisanId : (authController.userId ?? '');
+
+    // Force le chargement des commandes à chaque build
+    orderController.fetchOrders();
+
     return Scaffold(
-      backgroundColor: AppTheme.backgroundLight,
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
+        elevation: 0,
         title: Text(
           'Tableau de Bord Artisan',
           style: TextStyle(
@@ -111,86 +54,64 @@ class _ArtisanDashboardPageState extends State<ArtisanDashboardPage> with Single
           ),
         ),
         backgroundColor: Colors.transparent,
-        elevation: 0,
+        // backgroundColor: Colors.white,
+        // title: const Text(
+        //   'Tableau de bord',
+        //   style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
+        // ),
         actions: [
           StreamBuilder<int>(
-            stream: _messageController.getUnreadCount(widget.artisanId),
+            stream: _messageController.getUnreadCount(artisanId),
             builder: (context, snapshot) {
               final unreadCount = snapshot.data ?? 0;
-              
               return Stack(
                 children: [
-                  Container(
-                    margin: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryBrown.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: IconButton(
-                      icon: TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0.8, end: 1.0),
-                        duration: const Duration(milliseconds: 500),
-                        curve: Curves.elasticOut,
-                        builder: (context, value, child) {
-                          return Transform.scale(
-                            scale: unreadCount > 0 ? value : 1.0,
-                            child: Icon(
-                              Icons.notifications_outlined,
-                              color: AppTheme.primaryBrown,
-                              size: 26,
-                            ),
-                          );
-                        },
-                      ),
-                      onPressed: () {
-                        Get.to(
-                          () => ArtisanConversationsList(artisanId: widget.artisanId),
-                          transition: Transition.rightToLeft,
-                          duration: const Duration(milliseconds: 300),
+                  IconButton(
+                    icon: TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.8, end: 1.0),
+                      duration: const Duration(milliseconds: 500),
+                      curve: Curves.elasticOut,
+                      builder: (context, value, child) {
+                        return Transform.scale(
+                          scale: unreadCount > 0 ? value : 1.0,
+                          child: Icon(
+                            Icons.notifications_outlined,
+                            color: AppTheme.primaryBrown,
+                            size: 26,
+                          ),
                         );
                       },
                     ),
+                    onPressed: () {
+                      Get.to(
+                        () => ArtisanConversationsList(artisanId: artisanId),
+                        transition: Transition.rightToLeft,
+                        duration: const Duration(milliseconds: 300),
+                      );
+                    },
                   ),
                   if (unreadCount > 0)
                     Positioned(
                       right: 8,
                       top: 8,
-                      child: TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0.5, end: 1.0),
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.elasticOut,
-                        builder: (context, value, child) {
-                          return Transform.scale(
-                            scale: value,
-                            child: Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white,
-                                  width: 2,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.red.withOpacity(0.3),
-                                    blurRadius: 6,
-                                    spreadRadius: 2,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Text(
-                                unreadCount.toString(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          '$unreadCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     ),
                 ],
@@ -200,196 +121,290 @@ class _ArtisanDashboardPageState extends State<ArtisanDashboardPage> with Single
           IconButton(
             icon: Icon(Icons.person, color: AppTheme.primaryBrown),
             onPressed: () {
-              Get.toNamed(AppRoutes.artisanProfile);
+              Get.to(
+                () => CategoryProductsPage(
+                  categoryId: 'all', // Catégorie par défaut
+                  artisanId: artisanId,
+                ),
+              );
             },
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _refreshData,
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                AppTheme.backgroundLight,
-                AppTheme.surfaceLight,
-              ],
-            ),
-          ),
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: SlideTransition(
-              position: _slideAnimation,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Stack(
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: 20),
-                        // En-tête avec statistiques étendues
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: _buildAnimatedCard(
-                            child: Column(
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                  children: [
-                                    _buildStatCard(
-                                      'Produits',
-                                      '12',
-                                      Icons.inventory,
-                                      AppTheme.primaryBrown,
-                                      '↑ 2 cette semaine',
-                                    ),
-                                    _buildStatCard(
-                                      'Commandes',
-                                      '5',
-                                      Icons.shopping_bag,
-                                      Colors.green,
-                                      '↑ 3 en attente',
-                                    ),
-                                    _buildStatCard(
-                                      'Ventes',
-                                      '1.2k TND',
-                                      Icons.attach_money,
-                                      Colors.orange,
-                                      '↑ 15% ce mois',
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 20),
-                                _buildRevenueChart(),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        // Actions rapides avec badges de notification
-                        _buildQuickActions(),
-                        const SizedBox(height: 24),
-                        // Section des dernières activités améliorée
-                        _buildLatestActivities(),
-                      ],
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    spreadRadius: 1,
+                    blurRadius: 10,
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Bienvenue sur votre tableau de bord',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
                     ),
-                    if (_isLoading)
-                      Positioned.fill(
-                        child: Container(
-                          color: Colors.black.withOpacity(0.3),
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryBrown),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Obx(
+                          () => GestureDetector(
+                            onTap: () {
+                              Get.to(() => ArtisanProductManagementPage());
+                            },
+                            child: _buildStatCard(
+                              'Produits',
+                              controller.totalProducts.value.toString(),
+                              Icons.inventory_2,
+                              Colors.blue,
                             ),
                           ),
                         ),
                       ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Obx(
+                          () => _buildStatCard(
+                            'Commandes',
+                            controller.totalOrders.value.toString(),
+                            Icons.shopping_cart,
+                            Colors.orange,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Obx(
+                          () => _buildStatCard(
+                            'Revenus',
+                            '${orderController.getTotalRevenueForArtisan(currentArtisanId).toStringAsFixed(2)} TND',
+                            Icons.attach_money,
+                            Colors.green,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Produits les plus vendus',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Taux de vente (%) et nombre de ventes pour chaque produit',
+                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 20),
+                    FutureBuilder<Map<String, double>>(
+                      future: orderController.getProductSalesRateForArtisan(
+                        currentArtisanId,
+                      ),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+                        final rates = snapshot.data ?? {};
+                        if (rates.isEmpty) {
+                          return _buildEmptyState(
+                            'Aucun produit vendu',
+                            Icons.inventory_2_outlined,
+                          );
+                        }
+                        final salesCount = orderController
+                            .getProductSalesCountForArtisan(currentArtisanId);
+                        final ratesList =
+                            rates.values
+                                .toList()
+                                .map((e) => (e as num).toDouble())
+                                .toList();
+                        final maxRate =
+                            ratesList.isEmpty
+                                ? 0.0
+                                : ratesList.reduce((a, b) => a > b ? a : b);
+                        final maxIndex = ratesList.indexOf(maxRate);
+                        final barColors = List.generate(
+                          rates.length,
+                          (i) =>
+                              i == maxIndex && maxRate > 0
+                                  ? AppTheme.accentGold
+                                  : AppTheme.primaryBrown,
+                        );
+                        return SizedBox(
+                          height: 320,
+                          child: Stack(
+                            children: [
+                              BarChart(
+                                BarChartData(
+                                  alignment: BarChartAlignment.spaceAround,
+                                  maxY: 100.0,
+                                  barTouchData: BarTouchData(enabled: false),
+                                  titlesData: FlTitlesData(
+                                    leftTitles: AxisTitles(
+                                      sideTitles: SideTitles(showTitles: false),
+                                    ),
+                                    bottomTitles: AxisTitles(
+                                      sideTitles: SideTitles(
+                                        showTitles: true,
+                                        getTitlesWidget: (
+                                          double value,
+                                          TitleMeta meta,
+                                        ) {
+                                          final idx = value.toInt();
+                                          if (idx < 0 ||
+                                              idx >= rates.keys.length)
+                                            return const SizedBox();
+                                          final name = rates.keys.elementAt(
+                                            idx,
+                                          );
+                                          return Padding(
+                                            padding: const EdgeInsets.only(
+                                              top: 8.0,
+                                            ),
+                                            child: Text(
+                                              name,
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                  borderData: FlBorderData(show: false),
+                                  gridData: FlGridData(show: false),
+                                  barGroups: List.generate(rates.length, (i) {
+                                    final isTop = i == maxIndex && maxRate > 0;
+                                    return BarChartGroupData(
+                                      x: i,
+                                      barRods: [
+                                        BarChartRodData(
+                                          toY: ratesList[i],
+                                          color: barColors[i],
+                                          width: 22,
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          gradient: LinearGradient(
+                                            colors:
+                                                isTop
+                                                    ? [
+                                                      AppTheme.accentGold,
+                                                      AppTheme.primaryBrown
+                                                          .withOpacity(0.7),
+                                                    ]
+                                                    : [
+                                                      AppTheme.primaryBrown,
+                                                      AppTheme.primaryBrown
+                                                          .withOpacity(0.5),
+                                                    ],
+                                            begin: Alignment.bottomCenter,
+                                            end: Alignment.topCenter,
+                                          ),
+                                        ),
+                                      ],
+                                      showingTooltipIndicators: [],
+                                    );
+                                  }),
+                                ),
+                              ),
+                              ...List.generate(rates.length, (i) {
+                                final barHeight = 260 * (ratesList[i] / 100.0);
+                                final pid =
+                                    salesCount.keys.length > i
+                                        ? salesCount.keys.elementAt(i)
+                                        : '';
+                                final sales = salesCount[pid] ?? 0;
+                                return Positioned(
+                                  left:
+                                      48.0 +
+                                      i *
+                                          (MediaQuery.of(context).size.width -
+                                              96) /
+                                          rates.length,
+                                  top: 260 - barHeight - 30,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: barColors[i],
+                                      borderRadius: BorderRadius.circular(12),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: barColors[i].withOpacity(0.15),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Text(
+                                      '$sales',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
             ),
-          ),
-        ),
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-            switch (index) {
-              case 0:
-                // Déjà sur le dashboard
-                break;
-              case 1:
-                Get.toNamed(AppRoutes.artisanProfile);
-                break;
-              case 2:
-                Get.toNamed(AppRoutes.categoryManagement);
-                break;
-              case 3:
-                Get.toNamed(AppRoutes.productManagement);
-                break;
-            }
-          },
-          selectedItemColor: AppTheme.primaryBrown,
-          unselectedItemColor: Colors.grey,
-          backgroundColor: Colors.white,
-          type: BottomNavigationBarType.fixed,
-          elevation: 0,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard),
-              label: 'Dashboard',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Profil',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.category),
-              label: 'Catégories',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.inventory),
-              label: 'Produits',
-            ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildGlassmorphicCard({required Widget child}) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withOpacity(0.2),
-            Colors.white.withOpacity(0.05),
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            spreadRadius: 1,
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.2),
-                width: 1.5,
-              ),
-            ),
-            child: child,
-          ),
-        ),
-      ),
+      // floatingActionButton: FloatingActionButton.extended(
+      //   onPressed: () => Get.to(() => ArtisanProductManagementPage()),
+      //   backgroundColor: AppTheme.primaryBrown,
+      //   icon: const Icon(Icons.add, color: Colors.white),
+      //   label: const Text(
+      //     'Ajouter un produit',
+      //     style: TextStyle(color: Colors.white),
+      //   ),
+      // ),
     );
   }
 
@@ -398,399 +413,111 @@ class _ArtisanDashboardPageState extends State<ArtisanDashboardPage> with Single
     String value,
     IconData icon,
     Color color,
-    String trend,
   ) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: const Duration(milliseconds: 1000),
-      curve: Curves.easeOutQuart,
-      builder: (context, animationValue, child) {
-        return Transform.scale(
-          scale: animationValue,
-          child: _buildGlassmorphicCard(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: color.withOpacity(0.2),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      icon,
-                      color: color,
-                      size: 30,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    value,
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: color,
-                      shadows: [
-                        Shadow(
-                          color: color.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: AppTheme.textDark.withOpacity(0.8),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      trend,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: color,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 10,
           ),
-        );
-      },
-    );
-  }
-
-  Widget _buildAnimatedCard({required Widget child}) {
-    return Hero(
-      tag: UniqueKey(),
-      child: Card(
-        elevation: 8,
-        shadowColor: AppTheme.primaryBrown.withOpacity(0.3),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppTheme.surfaceLight,
-                Colors.white,
-              ],
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: child,
-          ),
-        ),
+        ],
       ),
-    );
-  }
-
-  Widget _buildQuickActions() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ShaderMask(
-            shaderCallback: (bounds) => LinearGradient(
-              colors: [
-                AppTheme.primaryBrown,
-                AppTheme.primaryBrown.withOpacity(0.7),
-              ],
-            ).createShader(bounds),
-            child: const Text(
-              'Actions Rapides',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: color,
             ),
           ),
-          const SizedBox(height: 16),
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            children: [
-              _buildActionCardWithBadge(
-                context,
-                'Gérer les Catégories',
-                Icons.category,
-                'Ajoutez et gérez vos catégories de produits',
-                () => Get.toNamed(AppRoutes.categoryManagement),
-                Colors.blue,
-                '2',
-                0,
-              ),
-              _buildActionCardWithBadge(
-                context,
-                'Gérer les Produits',
-                Icons.inventory,
-                'Ajoutez et gérez vos produits',
-                () => Get.toNamed(AppRoutes.productManagement),
-                AppTheme.primaryBrown,
-                '3',
-                1,
-              ),
-              _buildActionCardWithBadge(
-                context,
-                'Commandes',
-                Icons.shopping_bag,
-                'Gérez vos commandes en cours',
-                () => _showFeatureComingSoon(context),
-                Colors.green,
-                '5',
-                2,
-              ),
-              _buildActionCardWithBadge(
-                context,
-                'Statistiques',
-                Icons.analytics,
-                'Consultez vos statistiques de vente',
-                () => _showFeatureComingSoon(context),
-                Colors.orange,
-                '',
-                3,
-              ),
-            ],
-          ),
+          Text(title, style: const TextStyle(fontSize: 14, color: Colors.grey)),
         ],
       ),
     );
   }
 
-  Widget _buildActionCardWithBadge(
-    BuildContext context,
-    String title,
-    IconData icon,
-    String description,
-    VoidCallback onTap,
-    Color color,
-    String badgeCount,
-    int index,
-  ) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _cardHovered[index] = true),
-      onExit: (_) => setState(() => _cardHovered[index] = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        transform: Matrix4.identity()
-          ..translate(
-            0.0,
-            _cardHovered[index] ? -8.0 : 0.0,
-            0.0,
-          ),
-        child: Stack(
-          key: _cardKeys[index],
-          children: [
-            _buildGlassmorphicCard(
-              child: InkWell(
-                onTap: onTap,
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: color.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: color.withOpacity(0.2),
-                              blurRadius: 12,
-                              offset: const Offset(0, 6),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          icon,
-                          color: color,
-                          size: 36,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: color,
-                          shadows: [
-                            Shadow(
-                              color: color.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        description,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppTheme.textDark.withOpacity(0.7),
-                          height: 1.2,
-                        ),
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            if (badgeCount.isNotEmpty)
-              Positioned(
-                right: 12,
-                top: 12,
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.red.withOpacity(0.3),
-                        blurRadius: 8,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: Text(
-                    badgeCount,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget _buildOrderCard(Map<String, dynamic> order) {
+    final status = order['status'] as String;
+    Color statusColor;
+    switch (status) {
+      case 'pending':
+        statusColor = Colors.orange;
+        break;
+      case 'completed':
+        statusColor = Colors.green;
+        break;
+      case 'cancelled':
+        statusColor = Colors.red;
+        break;
+      default:
+        statusColor = Colors.grey;
+    }
 
-  Widget _buildRevenueChart() {
-    return _buildGlassmorphicCard(
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.withOpacity(0.2)),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Revenus hebdomadaires',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryBrown,
-                shadows: [
-                  Shadow(
-                    color: AppTheme.primaryBrown.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              height: 200,
-              child: CustomPaint(
-                painter: ChartPainter(
-                  data: _chartData.map((e) => e.amount).toList(),
-                  labels: _chartData.map((e) => e.day).toList(),
-                  color: AppTheme.primaryBrown,
-                ),
-                size: const Size(double.infinity, 200),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLatestActivities() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: _buildAnimatedCard(
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(
-                  Icons.access_time,
-                  color: AppTheme.primaryBrown,
-                  size: 24,
-                ),
-                const SizedBox(width: 8),
                 Text(
-                  'Dernières Activités',
-                  style: TextStyle(
-                    fontSize: 20,
+                  'Commande #${order['id'].substring(0, 8)}',
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryBrown,
+                    fontSize: 16,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    status.toUpperCase(),
+                    style: TextStyle(
+                      color: statusColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            _buildActivityItem(
-              'Nouvelle commande reçue',
-              'Il y a 2 heures',
-              Icons.notifications,
-              Colors.green,
+            const SizedBox(height: 12),
+            Text(
+              '${order['totalAmount']?.toStringAsFixed(2) ?? '0.00'} TND',
+              style: TextStyle(
+                color: AppTheme.primaryBrown,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            _buildDivider(),
-            _buildActivityItem(
-              'Produit ajouté : Tapis berbère',
-              'Il y a 5 heures',
-              Icons.add_circle,
-              Colors.blue,
-            ),
-            _buildDivider(),
-            _buildActivityItem(
-              'Commande #123 livrée',
-              'Il y a 1 jour',
-              Icons.check_circle,
-              Colors.orange,
+            const SizedBox(height: 8),
+            Text(
+              '${order['items']?.length ?? 0} articles',
+              style: TextStyle(color: Colors.grey[600], fontSize: 14),
             ),
           ],
         ),
@@ -798,83 +525,56 @@ class _ArtisanDashboardPageState extends State<ArtisanDashboardPage> with Single
     );
   }
 
-  Widget _buildDivider() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Container(
-        height: 1,
-        color: AppTheme.primaryBrown.withOpacity(0.1),
+  Widget _buildTopProductCard(Map<String, dynamic> product) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.withOpacity(0.2)),
       ),
-    );
-  }
-
-  Widget _buildActivityItem(
-      String title, String time, IconData icon, Color color) {
-    return InkWell(
-      onTap: () {
-        // Animation de pulsation au toucher
-        Get.snackbar(
-          title,
-          time,
-          backgroundColor: color.withOpacity(0.1),
-          colorText: color,
-          borderRadius: 10,
-          margin: const EdgeInsets.all(10),
-          duration: const Duration(seconds: 2),
-          icon: Icon(icon, color: color),
-        );
-      },
-      borderRadius: BorderRadius.circular(12),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withOpacity(0.2),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+            if (product['imageUrls']?.isNotEmpty ?? false)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  product['imageUrls'][0],
+                  width: 60,
+                  height: 60,
+                  fit: BoxFit.cover,
+                ),
               ),
-              child: Icon(
-                icon,
-                color: color,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textDark,
+                    product['name'] ?? 'Produit sans nom',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
                     ),
                   ),
+                  const SizedBox(height: 4),
                   Text(
-                    time,
+                    '${product['price']?.toStringAsFixed(2) ?? '0.00'} TND',
                     style: TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.textDark.withOpacity(0.6),
+                      color: AppTheme.primaryBrown,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
                     ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${product['orderCount'] ?? 0} commandes',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
                   ),
                 ],
               ),
-            ),
-            Icon(
-              Icons.chevron_right,
-              color: color.withOpacity(0.5),
-              size: 20,
             ),
           ],
         ),
@@ -882,63 +582,26 @@ class _ArtisanDashboardPageState extends State<ArtisanDashboardPage> with Single
     );
   }
 
-  void _showFeatureComingSoon(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+  Widget _buildEmptyState(String message, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.withOpacity(0.2)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 48, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            textAlign: TextAlign.center,
           ),
-          backgroundColor: AppTheme.surfaceLight,
-          title: Row(
-            children: [
-              Icon(
-                Icons.upcoming,
-                color: AppTheme.primaryBrown,
-                size: 24,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Fonctionnalité à venir',
-                style: TextStyle(
-                  color: AppTheme.primaryBrown,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Cette fonctionnalité sera bientôt disponible !',
-                style: TextStyle(
-                  color: AppTheme.textDark,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Icon(
-                Icons.construction,
-                color: AppTheme.primaryBrown.withOpacity(0.5),
-                size: 48,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'OK',
-                style: TextStyle(
-                  color: AppTheme.primaryBrown,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+        ],
+      ),
     );
   }
 }
@@ -948,38 +611,35 @@ class ChartPainter extends CustomPainter {
   final List<String> labels;
   final Color color;
 
-  ChartPainter({
-    required this.data,
-    required this.labels,
-    required this.color,
-  });
+  ChartPainter({required this.data, required this.labels, required this.color});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
+    final paint =
+        Paint()
+          ..color = color
+          ..strokeWidth = 3
+          ..style = PaintingStyle.stroke;
 
-    final fillPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          color.withOpacity(0.3),
-          color.withOpacity(0.0),
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+    final fillPaint =
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [color.withOpacity(0.3), color.withOpacity(0.0)],
+          ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
 
-    final dotPaint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 3
-      ..style = PaintingStyle.fill;
+    final dotPaint =
+        Paint()
+          ..color = Colors.white
+          ..strokeWidth = 3
+          ..style = PaintingStyle.fill;
 
-    final dotBorderPaint = Paint()
-      ..color = color
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
+    final dotBorderPaint =
+        Paint()
+          ..color = color
+          ..strokeWidth = 3
+          ..style = PaintingStyle.stroke;
 
     final maxValue = data.reduce((a, b) => a > b ? a : b);
     final points = <Offset>[];
@@ -991,31 +651,28 @@ class ChartPainter extends CustomPainter {
     }
 
     // Draw area
-    final path = Path()
-      ..moveTo(points.first.dx, points.first.dy);
+    final path = Path()..moveTo(points.first.dx, points.first.dy);
 
     for (var i = 1; i < points.length; i++) {
       final p0 = points[i - 1];
       final p1 = points[i];
-      final controlPoint1 = Offset(
-        p0.dx + (p1.dx - p0.dx) / 2,
-        p0.dy,
-      );
-      final controlPoint2 = Offset(
-        p0.dx + (p1.dx - p0.dx) / 2,
-        p1.dy,
-      );
+      final controlPoint1 = Offset(p0.dx + (p1.dx - p0.dx) / 2, p0.dy);
+      final controlPoint2 = Offset(p0.dx + (p1.dx - p0.dx) / 2, p1.dy);
       path.cubicTo(
-        controlPoint1.dx, controlPoint1.dy,
-        controlPoint2.dx, controlPoint2.dy,
-        p1.dx, p1.dy,
+        controlPoint1.dx,
+        controlPoint1.dy,
+        controlPoint2.dx,
+        controlPoint2.dy,
+        p1.dx,
+        p1.dy,
       );
     }
 
-    final fillPath = Path.from(path)
-      ..lineTo(points.last.dx, size.height)
-      ..lineTo(points.first.dx, size.height)
-      ..close();
+    final fillPath =
+        Path.from(path)
+          ..lineTo(points.last.dx, size.height)
+          ..lineTo(points.first.dx, size.height)
+          ..close();
 
     canvas.drawPath(fillPath, fillPaint);
     canvas.drawPath(path, paint);
@@ -1041,14 +698,11 @@ class ChartPainter extends CustomPainter {
       textPainter.layout();
       textPainter.paint(
         canvas,
-        Offset(
-          point.dx - textPainter.width / 2,
-          size.height - 20,
-        ),
+        Offset(point.dx - textPainter.width / 2, size.height - 20),
       );
     }
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-} 
+}

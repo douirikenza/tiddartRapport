@@ -1,5 +1,10 @@
+// Ce fichier ne doit plus être accessible par les artisans. Supprime la route ou le bouton qui y mène dans le dashboard artisan et ailleurs si besoin.
+// Tu peux aussi supprimer le contenu ou afficher un message d'accès refusé si jamais la page est appelée par erreur.
+
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:get/get.dart';
 import '../../controllers/category_controller.dart';
 import '../../models/category.dart';
@@ -8,7 +13,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/loading_overlay.dart';
 
 class CategoryManagementPage extends StatelessWidget {
-  final CategoryController controller = Get.put(CategoryController());
+  final CategoryController controller = Get.find<CategoryController>();
   final ImageService imageService = ImageService();
 
   CategoryManagementPage({Key? key}) : super(key: key);
@@ -170,7 +175,7 @@ class CategoryManagementPage extends StatelessWidget {
   void _showAddCategoryDialog(BuildContext context) {
     final nameController = TextEditingController();
     final descriptionController = TextEditingController();
-    final Rx<File?> selectedImage = Rx<File?>(null);
+    final Rx<dynamic> selectedImage = Rx<dynamic>(null);
 
     showDialog(
       context: context,
@@ -254,7 +259,9 @@ class CategoryManagementPage extends StatelessWidget {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(10),
                             image: DecorationImage(
-                              image: FileImage(selectedImage.value!),
+                              image: kIsWeb
+                                  ? MemoryImage(selectedImage.value as Uint8List)
+                                  : FileImage(selectedImage.value as File) as ImageProvider,
                               fit: BoxFit.cover,
                             ),
                             boxShadow: [
@@ -319,7 +326,7 @@ class CategoryManagementPage extends StatelessWidget {
                   onPressed: () async {
                     await imageService.showImagePickerDialog(
                       context,
-                      (File image) {
+                      (dynamic image) {
                         selectedImage.value = image;
                       },
                     );
@@ -358,6 +365,7 @@ class CategoryManagementPage extends StatelessWidget {
                       if (nameController.text.isEmpty) {
                         Get.snackbar(
                           'Attention',
+
                           'Le nom de la catégorie est obligatoire',
                           backgroundColor: Colors.orange.shade100,
                           colorText: Colors.orange.shade900,
@@ -366,7 +374,7 @@ class CategoryManagementPage extends StatelessWidget {
                         return;
                       }
 
-                      if (selectedImage.value == null) {
+                     if (selectedImage.value == null) {
                         Get.snackbar(
                           'Attention',
                           'Veuillez sélectionner une image pour la catégorie',

@@ -1,17 +1,24 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:path/path.dart' as path;
-import 'package:uuid/uuid.dart';
 import 'package:get/get.dart';
+import 'package:uuid/uuid.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert'; 
+import 'package:http_parser/http_parser.dart'; 
+
+
+const String cloudinaryCloudName = 'dy1cz1bv5'; 
+const String cloudinaryUploadPreset = 'tiddart';
+
 
 class ImageService {
   final ImagePicker _picker = ImagePicker();
-  final FirebaseStorage _storage = FirebaseStorage.instance;
   final uuid = const Uuid();
 
-  Future<File?> pickImage(ImageSource source) async {
+  Future<dynamic> pickImage(ImageSource source) async {
     try {
       final XFile? image = await _picker.pickImage(
         source: source,
@@ -20,7 +27,13 @@ class ImageService {
         imageQuality: 85,
       );
       if (image == null) return null;
-      return File(image.path);
+
+      if (kIsWeb) {
+        final bytes = await image.readAsBytes();
+        return bytes;
+      } else {
+        return File(image.path);
+      }
     } catch (e) {
       debugPrint('Erreur lors de la sélection de l\'image: $e');
       Get.snackbar(
@@ -34,64 +47,71 @@ class ImageService {
     }
   }
 
-  Future<String?> uploadImage(File imageFile, String folder) async {
+
+  Future<String?> uploadImage(dynamic imageData, String folder) async {
     try {
-      // Vérifier la taille de l'image (max 5MB)
-      final fileSize = await imageFile.length();
-      if (fileSize > 5 * 1024 * 1024) {
-        throw Exception('L\'image est trop volumineuse (max 5MB)');
+      String fileName = '${uuid.v4()}.jpg';
+      String cloudName = cloudinaryCloudName;
+      String uploadPreset = cloudinaryUploadPreset;
+
+      final url = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/upload');
+
+      http.MultipartRequest request = http.MultipartRequest('POST', url)
+        ..fields['upload_preset'] = uploadPreset;
+
+
+      if (kIsWeb) {
+        final Uint8List bytes = imageData as Uint8List;
+        if (bytes.length > 10 * 1024 * 1024) {
+          throw Exception('L\'image est trop volumineuse (max 10MB)');
+        }
+
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'file',
+            bytes,
+            filename: fileName,
+            contentType: MediaType('image', 'jpeg'),
+          ),
+        );
+      } else {
+        final File imageFile = imageData as File;
+        final fileSize = await imageFile.length();
+        if (fileSize > 10 * 1024 * 1024) {
+          throw Exception('L\'image est trop volumineuse (max 10MB)');
+        }
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'file',
+            imageFile.path,
+          ),
+        );
       }
 
-      String fileName = '${uuid.v4()}${path.extension(imageFile.path)}';
-      final storageRef = _storage.ref().child('$folder/$fileName');
-      
-      final uploadTask = storageRef.putFile(
-        imageFile,
-        SettableMetadata(
-          contentType: 'image/${path.extension(imageFile.path).substring(1)}',
-          customMetadata: {'picked-file-path': imageFile.path},
-        ),
-      );
+      final response = await request.send();
 
-      // Gérer les erreurs pendant le téléchargement
-      uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
-        switch (snapshot.state) {
-          case TaskState.running:
-            final progress = 100.0 * (snapshot.bytesTransferred / snapshot.totalBytes);
-            debugPrint('Progression du téléchargement : ${progress.toStringAsFixed(2)}%');
-            break;
-          case TaskState.error:
-            throw Exception('Erreur pendant le téléchargement');
-          default:
-            break;
-        }
-      });
-      
-      final snapshot = await uploadTask.whenComplete(() {});
-      final downloadUrl = await snapshot.ref.getDownloadURL();
-      return downloadUrl;
+      if (response.statusCode == 200) {
+        final responseData = await response.stream.toBytes();
+        final responseString = String.fromCharCodes(responseData);
+        final jsonMap = jsonDecode(responseString);
+        final imageUrl = jsonMap['url'] as String; 
+        return imageUrl;
+      } else {
+        final responseData = await response.stream.toBytes();
+        final responseString = String.fromCharCodes(responseData);
+        debugPrint('Cloudinary upload failed: $responseString');
+        throw Exception('Cloudinary upload failed ${response.statusCode}');
+      }
     } catch (e) {
-      debugPrint('Erreur lors du téléchargement de l\'image: $e');
-      String errorMessage = 'Impossible de télécharger l\'image.';
-      
-      if (e.toString().contains('trop volumineuse')) {
-        errorMessage = 'L\'image est trop volumineuse (max 5MB)';
-      } else if (e is FirebaseException) {
-        switch (e.code) {
-          case 'storage/unauthorized':
-            errorMessage = 'Non autorisé à télécharger l\'image';
-            break;
-          case 'storage/canceled':
-            errorMessage = 'Téléchargement annulé';
-            break;
-          case 'storage/retry-limit-exceeded':
-            errorMessage = 'Problème de connexion, veuillez réessayer';
-            break;
-          default:
-            errorMessage = 'Erreur de téléchargement : ${e.message}';
-        }
+      debugPrint('Error uploading image: $e');
+      String errorMessage = 'Failed to upload image.';
+
+      if (e.toString().contains('too large')) {
+        errorMessage = 'Image is too large (max 10MB)';
+      } else {
+        errorMessage = 'Cloudinary upload error: $e';
       }
-      
+
       Get.snackbar(
         'Erreur',
         errorMessage,
@@ -104,7 +124,7 @@ class ImageService {
     }
   }
 
-  Future<void> showImagePickerDialog(BuildContext context, Function(File) onImageSelected) async {
+  Future<void> showImagePickerDialog(BuildContext context, Function(dynamic) onImageSelected) async {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -128,11 +148,11 @@ class ImageService {
                   ),
                   child: Icon(Icons.camera_alt, color: Colors.blue.shade700),
                 ),
-                title: const Text('Prendre une photo'),
-                subtitle: const Text('Utiliser l\'appareil photo'),
+                title: const Text('Take a Photo'),
+                subtitle: const Text('Use the camera'),
                 onTap: () async {
                   Navigator.pop(context);
-                  final File? image = await pickImage(ImageSource.camera);
+                  final image = await pickImage(ImageSource.camera);
                   if (image != null) {
                     onImageSelected(image);
                   }
@@ -148,11 +168,12 @@ class ImageService {
                   ),
                   child: Icon(Icons.photo_library, color: Colors.green.shade700),
                 ),
-                title: const Text('Choisir depuis la galerie'),
-                subtitle: const Text('Sélectionner une image existante'),
+              
+                title: const Text('Prendre une photo'),
+                subtitle: const Text('Utiliser l\'appareil photo'),
                 onTap: () async {
                   Navigator.pop(context);
-                  final File? image = await pickImage(ImageSource.gallery);
+                  final image = await pickImage(ImageSource.gallery);
                   if (image != null) {
                     onImageSelected(image);
                   }
@@ -164,4 +185,4 @@ class ImageService {
       },
     );
   }
-} 
+}

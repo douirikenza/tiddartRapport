@@ -32,15 +32,15 @@ class OrderStatisticsPage extends StatelessWidget {
             // Vue d'ensemble
             _buildOverviewSection(),
             const SizedBox(height: 24),
-            
+
             // Graphique des ventes
             _buildSalesChart(),
             const SizedBox(height: 24),
-            
+
             // Statistiques détaillées
             _buildDetailedStats(),
             const SizedBox(height: 24),
-            
+
             // Meilleures catégories
             _buildTopCategories(),
           ],
@@ -135,16 +135,15 @@ class OrderStatisticsPage extends StatelessWidget {
               ),
               DropdownButton<String>(
                 value: 'Cette semaine',
-                items: [
-                  'Cette semaine',
-                  'Ce mois',
-                  'Cette année',
-                ].map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
+                items:
+                    ['Cette semaine', 'Ce mois', 'Cette année'].map((
+                      String value,
+                    ) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
                 onChanged: (String? newValue) {
                   // TODO: Implémenter le changement de période
                 },
@@ -159,16 +158,10 @@ class OrderStatisticsPage extends StatelessWidget {
                 gridData: FlGridData(show: false),
                 titlesData: FlTitlesData(
                   leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 40,
-                    ),
+                    sideTitles: SideTitles(showTitles: true, reservedSize: 40),
                   ),
                   bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 30,
-                    ),
+                    sideTitles: SideTitles(showTitles: true, reservedSize: 30),
                   ),
                   rightTitles: AxisTitles(
                     sideTitles: SideTitles(showTitles: false),
@@ -279,7 +272,12 @@ class OrderStatisticsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
@@ -321,18 +319,12 @@ class OrderStatisticsPage extends StatelessWidget {
               Container(
                 width: 12,
                 height: 12,
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
-                ),
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
               ),
               const SizedBox(width: 8),
               Text(
                 title,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: AppTheme.textDark,
-                ),
+                style: TextStyle(fontSize: 16, color: AppTheme.textDark),
               ),
             ],
           ),
@@ -349,7 +341,11 @@ class OrderStatisticsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryProgressBar(String category, double progress, Color color) {
+  Widget _buildCategoryProgressBar(
+    String category,
+    double progress,
+    Color color,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Column(
@@ -389,4 +385,4 @@ class OrderStatisticsPage extends StatelessWidget {
       ),
     );
   }
-} 
+}

@@ -1,18 +1,19 @@
+import 'package:Tiddart/firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:tiddart/firebase_options.dart';
 import 'bindings/app_binding.dart';
 import 'routes/app_routes.dart';
+import 'controllers/category_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // 🔥 Initialiser Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  Get.put(CategoryController(), permanent: true);
 
   runApp(const TiddartApp());
 }
@@ -29,9 +30,7 @@ class TiddartApp extends StatelessWidget {
       theme: ThemeData(
         scaffoldBackgroundColor: const Color(0xFFFCEEDB),
         primarySwatch: Colors.brown,
-        textTheme: GoogleFonts.alkalamiTextTheme(
-          Theme.of(context).textTheme,
-        ),
+        textTheme: GoogleFonts.alkalamiTextTheme(Theme.of(context).textTheme),
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFFFCEEDB),
           elevation: 0,
@@ -43,8 +42,26 @@ class TiddartApp extends StatelessWidget {
           ),
         ),
       ),
+      darkTheme: ThemeData(
+        scaffoldBackgroundColor: Colors.grey[900],
+        primarySwatch: Colors.brown,
+        textTheme: GoogleFonts.alkalamiTextTheme(
+          Theme.of(context).textTheme,
+        ).apply(bodyColor: Colors.white, displayColor: Colors.white),
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.grey[900],
+          elevation: 0,
+          iconTheme: const IconThemeData(color: Colors.white),
+          titleTextStyle: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+      ),
+      themeMode: ThemeMode.system,
       initialRoute: AppRoutes.welcome,
-      getPages: AppPages.routes,
+      getPages: AppRoutes.routes,
     );
   }
 }

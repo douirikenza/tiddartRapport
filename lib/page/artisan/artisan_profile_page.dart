@@ -2,9 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../theme/app_theme.dart';
 
-class ArtisanProfilePage extends StatelessWidget {
-  const ArtisanProfilePage({Key? key}) : super(key: key);
+class ArtisanProfilePage extends StatefulWidget {
+  final String artisanId;
 
+  const ArtisanProfilePage({Key? key, required this.artisanId})
+    : super(key: key);
+
+  @override
+  State<ArtisanProfilePage> createState() => _ArtisanProfilePageState();
+}
+
+class _ArtisanProfilePageState extends State<ArtisanProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -18,8 +26,15 @@ class ArtisanProfilePage extends StatelessWidget {
           ),
         ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppTheme.primaryBrown),
-          onPressed: () => Get.back(),
+          icon: Icon(Icons.arrow_back_ios, color: AppTheme.primaryBrown),
+          onPressed: () {
+            Navigator.of(context).pop();
+            Get.back();
+          },
+          style: IconButton.styleFrom(
+            backgroundColor: AppTheme.surfaceLight,
+            padding: const EdgeInsets.all(12),
+          ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -121,33 +136,44 @@ class ArtisanProfilePage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 children: [
-                  _buildInfoCard(
-                    'Informations Personnelles',
-                    [
-                      _buildInfoRow(Icons.email, 'Email', 'mohamed.ali@email.com'),
-                      _buildInfoRow(Icons.phone, 'Téléphone', '+216 XX XXX XXX'),
-                      _buildInfoRow(Icons.location_on, 'Adresse', 'Tunis, Tunisie'),
-                    ],
-                  ),
+                  _buildInfoCard('Informations Personnelles', [
+                    _buildInfoRow(
+                      Icons.email,
+                      'Email',
+                      'mohamed.ali@email.com',
+                    ),
+                    _buildInfoRow(Icons.phone, 'Téléphone', '+216 XX XXX XXX'),
+                    _buildInfoRow(
+                      Icons.location_on,
+                      'Adresse',
+                      'Tunis, Tunisie',
+                    ),
+                  ]),
                   const SizedBox(height: 20),
-                  _buildInfoCard(
-                    'Informations Professionnelles',
-                    [
-                      _buildInfoRow(Icons.work, 'Spécialité', 'Artisanat traditionnel'),
-                      _buildInfoRow(Icons.star, 'Expérience', '10 ans'),
-                      _buildInfoRow(Icons.category, 'Catégories', '3 catégories'),
-                      _buildInfoRow(Icons.shopping_bag, 'Produits', '12 produits'),
-                    ],
-                  ),
+                  _buildInfoCard('Informations Professionnelles', [
+                    _buildInfoRow(
+                      Icons.work,
+                      'Spécialité',
+                      'Artisanat traditionnel',
+                    ),
+                    _buildInfoRow(Icons.star, 'Expérience', '10 ans'),
+                    _buildInfoRow(Icons.category, 'Catégories', '3 catégories'),
+                    _buildInfoRow(
+                      Icons.shopping_bag,
+                      'Produits',
+                      '12 produits',
+                    ),
+                  ]),
                   const SizedBox(height: 20),
-                  _buildInfoCard(
-                    'Statistiques',
-                    [
-                      _buildInfoRow(Icons.trending_up, 'Ventes totales', '1.2k TND'),
-                      _buildInfoRow(Icons.people, 'Clients', '45 clients'),
-                      _buildInfoRow(Icons.star_rate, 'Note moyenne', '4.8/5'),
-                    ],
-                  ),
+                  _buildInfoCard('Statistiques', [
+                    _buildInfoRow(
+                      Icons.trending_up,
+                      'Ventes totales',
+                      '1.2k TND',
+                    ),
+                    _buildInfoRow(Icons.people, 'Clients', '45 clients'),
+                    _buildInfoRow(Icons.star_rate, 'Note moyenne', '4.8/5'),
+                  ]),
                 ],
               ),
             ),
@@ -202,11 +228,7 @@ class ArtisanProfilePage extends StatelessWidget {
               color: AppTheme.primaryBrown.withOpacity(0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(
-              icon,
-              color: AppTheme.primaryBrown,
-              size: 20,
-            ),
+            child: Icon(icon, color: AppTheme.primaryBrown, size: 20),
           ),
           const SizedBox(width: 15),
           Column(
@@ -232,4 +254,26 @@ class ArtisanProfilePage extends StatelessWidget {
       ),
     );
   }
-} 
+
+  void _showMessage(String message, bool isError) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isError ? Icons.error_outline : Icons.check_circle_outline,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 8),
+            Flexible(child: Text(message)),
+          ],
+        ),
+        backgroundColor: isError ? Colors.red : Colors.green,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+}

@@ -10,31 +10,32 @@ class CategoryController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchCategories();
-  }
-
-  Future<void> fetchCategories() async {
-    try {
-      isLoading.value = true;
-      final QuerySnapshot snapshot = await _firestore.collection('categories').get();
+    print('CategoryController initialisé !');
+    _firestore.collection('categories').snapshots().listen((snapshot) {
+      print('Catégories Firestore: \\${snapshot.docs.length}');
+      for (var doc in snapshot.docs) {
+        print('Catégorie: \\${doc.data()}');
+      }
       categories.value = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
-        return Category.fromJson({'id': doc.id, ...data});
+        return Category.fromJson({
+          'id'         : doc.id,
+          'name'       : data['name']        as String?,
+          'description': data['description'] as String?,
+          'imageUrl'   : data['image']       as String?,
+          'createdAt'  : data['createdAt'],
+        });
       }).toList();
-    } catch (e) {
-      Get.snackbar('Erreur', 'Impossible de charger les catégories');
-    } finally {
-      isLoading.value = false;
-    }
+    });
   }
 
   Future<void> addCategory(String name, String description, String imageUrl) async {
     try {
       isLoading.value = true;
       final docRef = await _firestore.collection('categories').add({
-        'name': name,
+        'nom': name,
         'description': description,
-        'imageUrl': imageUrl,
+        'image': imageUrl,
         'createdAt': DateTime.now().toIso8601String(),
       });
 
@@ -45,7 +46,7 @@ class CategoryController extends GetxController {
         imageUrl: imageUrl,
         createdAt: DateTime.now(),
       );
-
+       print('category data: ${newCategory.toJson()}');
       categories.add(newCategory);
       Get.snackbar('Succès', 'Catégorie ajoutée avec succès');
     } catch (e) {

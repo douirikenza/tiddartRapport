@@ -5,14 +5,19 @@ import '../../controllers/message_controller.dart';
 import '../../models/message_model.dart';
 import 'artisan_chat_page.dart';
 
-class ArtisanConversationsList extends StatelessWidget {
+class ArtisanConversationsList extends StatefulWidget {
   final String artisanId;
-  final MessageController _messageController = Get.find<MessageController>();
 
-  ArtisanConversationsList({
-    Key? key,
-    required this.artisanId,
-  }) : super(key: key);
+  const ArtisanConversationsList({Key? key, required this.artisanId})
+    : super(key: key);
+
+  @override
+  State<ArtisanConversationsList> createState() =>
+      _ArtisanConversationsListState();
+}
+
+class _ArtisanConversationsListState extends State<ArtisanConversationsList> {
+  final MessageController _messageController = Get.find<MessageController>();
 
   @override
   Widget build(BuildContext context) {
@@ -30,12 +35,19 @@ class ArtisanConversationsList extends StatelessWidget {
           ),
         ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppTheme.primaryBrown),
-          onPressed: () => Get.back(),
+          icon: Icon(Icons.arrow_back_ios, color: AppTheme.primaryBrown),
+          onPressed: () {
+            Navigator.of(context).pop();
+            Get.back();
+          },
+          style: IconButton.styleFrom(
+            backgroundColor: AppTheme.surfaceLight,
+            padding: const EdgeInsets.all(12),
+          ),
         ),
       ),
       body: StreamBuilder<List<Message>>(
-        stream: _messageController.getMessages(artisanId),
+        stream: _messageController.getMessages(widget.artisanId),
         builder: (context, snapshot) {
           print('État de la connexion: ${snapshot.connectionState}');
           print('Données: ${snapshot.data}');
@@ -47,7 +59,9 @@ class ArtisanConversationsList extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryBrown),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  AppTheme.primaryBrown,
+                ),
               ),
             );
           }
@@ -114,7 +128,9 @@ class ArtisanConversationsList extends StatelessWidget {
           for (var message in messages) {
             final senderId = message.senderId;
             if (!latestMessages.containsKey(senderId) ||
-                message.timestamp.isAfter(latestMessages[senderId]!.timestamp)) {
+                message.timestamp.isAfter(
+                  latestMessages[senderId]!.timestamp,
+                )) {
               latestMessages[senderId] = message;
             }
           }
@@ -124,9 +140,10 @@ class ArtisanConversationsList extends StatelessWidget {
             itemCount: latestMessages.length,
             itemBuilder: (context, index) {
               final message = latestMessages.values.toList()[index];
-              final unreadCount = messages
-                  .where((m) => m.senderId == message.senderId && !m.isRead)
-                  .length;
+              final unreadCount =
+                  messages
+                      .where((m) => m.senderId == message.senderId && !m.isRead)
+                      .length;
 
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
@@ -148,7 +165,7 @@ class ArtisanConversationsList extends StatelessWidget {
                     onTap: () {
                       Get.to(
                         () => ArtisanChatPage(
-                          artisanId: artisanId,
+                          artisanId: widget.artisanId,
                           clientId: message.senderId,
                           clientName: message.senderName,
                         ),
@@ -162,21 +179,24 @@ class ArtisanConversationsList extends StatelessWidget {
                         children: [
                           CircleAvatar(
                             radius: 28,
-                            backgroundColor: AppTheme.primaryBrown.withOpacity(0.1),
-                            child: message.senderImage != null
-                                ? ClipOval(
-                                    child: Image.network(
-                                      message.senderImage!,
-                                      width: 56,
-                                      height: 56,
-                                      fit: BoxFit.cover,
+                            backgroundColor: AppTheme.primaryBrown.withOpacity(
+                              0.1,
+                            ),
+                            child:
+                                message.senderImage != null
+                                    ? ClipOval(
+                                      child: Image.network(
+                                        message.senderImage!,
+                                        width: 56,
+                                        height: 56,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                    : Icon(
+                                      Icons.person,
+                                      size: 32,
+                                      color: AppTheme.primaryBrown,
                                     ),
-                                  )
-                                : Icon(
-                                    Icons.person,
-                                    size: 32,
-                                    color: AppTheme.primaryBrown,
-                                  ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
@@ -184,7 +204,8 @@ class ArtisanConversationsList extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       message.senderName,
@@ -197,7 +218,8 @@ class ArtisanConversationsList extends StatelessWidget {
                                     Text(
                                       _formatTimestamp(message.timestamp),
                                       style: TextStyle(
-                                        color: AppTheme.primaryBrown.withOpacity(0.6),
+                                        color: AppTheme.primaryBrown
+                                            .withOpacity(0.6),
                                         fontSize: 12,
                                       ),
                                     ),
@@ -249,14 +271,8 @@ class ArtisanConversationsList extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppTheme.primaryBrown,
         onPressed: () async {
-          await _messageController.addTestMessage(artisanId);
-          Get.snackbar(
-            'Test',
-            'Message de test ajouté',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.green.withOpacity(0.1),
-            colorText: Colors.green,
-          );
+          await _messageController.addTestMessage(widget.artisanId);
+          _showMessage('Message de test ajouté', false);
         },
         child: const Icon(Icons.add_comment, color: Colors.white),
       ),
@@ -277,4 +293,26 @@ class ArtisanConversationsList extends StatelessWidget {
       return 'À l\'instant';
     }
   }
-} 
+
+  void _showMessage(String message, bool isError) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isError ? Icons.error_outline : Icons.check_circle_outline,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 8),
+            Flexible(child: Text(message)),
+          ],
+        ),
+        backgroundColor: isError ? Colors.red : Colors.green,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+}
