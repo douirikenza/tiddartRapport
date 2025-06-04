@@ -58,25 +58,25 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
   Future<void> _signIn() async {
     if (!_validateInputs()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.error_outline, color: Colors.white),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text("Veuillez entrer votre email et mot de passe"),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-      );
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(
+      //     content: Row(
+      //       children: [
+      //         Icon(Icons.error_outline, color: Colors.white),
+      //         const SizedBox(width: 8),
+      //         Flexible(
+      //           child: Text("Veuillez entrer votre email et mot de passe"),
+      //         ),
+      //       ],
+      //     ),
+      //     backgroundColor: const Color.fromARGB(255, 241, 130, 96),
+      //     behavior: SnackBarBehavior.floating,
+      //     margin: const EdgeInsets.all(16),
+      //     shape: RoundedRectangleBorder(
+      //       borderRadius: BorderRadius.circular(10),
+      //     ),
+      //   ),
+      // );
     }
     ;
 
@@ -112,7 +112,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
             Flexible(child: Text(message)),
           ],
         ),
-        backgroundColor: Colors.red,
+        backgroundColor: const Color.fromARGB(255, 241, 130, 96),
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

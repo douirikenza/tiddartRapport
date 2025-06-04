@@ -38,10 +38,9 @@ class _WelcomePageState extends State<WelcomePage>
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutCubic,
-    ));
+    ).animate(
+      CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
+    );
 
     _fadeController.forward();
     _slideController.forward();
@@ -96,8 +95,9 @@ class _WelcomePageState extends State<WelcomePage>
                     ),
                     const SizedBox(height: 40),
                     ShaderMask(
-                      shaderCallback: (bounds) =>
-                          AppTheme.primaryGradient.createShader(bounds),
+                      shaderCallback:
+                          (bounds) =>
+                              AppTheme.primaryGradient.createShader(bounds),
                       child: Text(
                         'TIDDART',
                         style: AppTheme.textTheme.displayLarge?.copyWith(
@@ -118,11 +118,12 @@ class _WelcomePageState extends State<WelcomePage>
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () => Get.to(
-                          () => const LoginPage(),
-                          transition: Transition.fadeIn,
-                          duration: const Duration(milliseconds: 500),
-                        ),
+                        onPressed:
+                            () => Get.to(
+                              () => const LoginPage(),
+                              transition: Transition.fadeIn,
+                              duration: const Duration(milliseconds: 500),
+                            ),
                         style: AppTheme.primaryButtonStyle,
                         child: const Text(
                           'Se connecter',
@@ -134,11 +135,12 @@ class _WelcomePageState extends State<WelcomePage>
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton(
-                        onPressed: () => Get.to(
-                          () => MainPage(),
-                          transition: Transition.fadeIn,
-                          duration: const Duration(milliseconds: 500),
-                        ),
+                        onPressed:
+                            () => Get.to(
+                              () => MainPage(),
+                              transition: Transition.fadeIn,
+                              duration: const Duration(milliseconds: 500),
+                            ),
                         style: AppTheme.secondaryButtonStyle,
                         child: const Text(
                           'Continuer sans compte',
@@ -149,7 +151,9 @@ class _WelcomePageState extends State<WelcomePage>
                     const SizedBox(height: 20),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 10),
+                        horizontal: 20,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
                         color: AppTheme.accentGold.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(15),
@@ -157,8 +161,10 @@ class _WelcomePageState extends State<WelcomePage>
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.shopping_bag_outlined,
-                              color: AppTheme.accentGold),
+                          Icon(
+                            Icons.shopping_bag_outlined,
+                            color: AppTheme.accentGold,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             'Artisanat authentique',

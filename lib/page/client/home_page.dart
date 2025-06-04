@@ -534,29 +534,76 @@ class _HomePageState extends State<HomePage> {
                                       borderRadius: BorderRadius.circular(30),
                                       child: InkWell(
                                         onTap: () {
-                                          final cartController =
-                                              Get.find<CartController>();
-                                          cartController.addToCart(
-                                            CartItem(
-                                              product: product,
-                                              quantity: 1,
-                                            ),
-                                          );
-                                          Get.snackbar(
-                                            'Ajouté au panier',
-                                            '${product.name} a été ajouté avec succès.',
-                                            backgroundColor: AppTheme
-                                                .surfaceLight
-                                                .withOpacity(0.95),
-                                            colorText: AppTheme.primaryBrown,
-                                            snackPosition: SnackPosition.BOTTOM,
-                                            margin: const EdgeInsets.all(16),
-                                            borderRadius: 10,
-                                            duration: const Duration(
-                                              seconds: 3,
-                                            ),
-                                            boxShadows: AppTheme.defaultShadow,
-                                          );
+                                          if (authController
+                                                  .firebaseUser
+                                                  .value ==
+                                              null) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.error_outline,
+                                                      color: Colors.white,
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    Flexible(
+                                                      child: Text(
+                                                        'Veuillez vous connecter pour ajouter un produit au panier',
+                                                        style: TextStyle(
+                                                          color: Colors.white,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                backgroundColor:
+                                                    const Color.fromARGB(
+                                                      255,
+                                                      241,
+                                                      130,
+                                                      96,
+                                                    ),
+                                                behavior:
+                                                    SnackBarBehavior.floating,
+                                                margin: const EdgeInsets.all(
+                                                  16,
+                                                ),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                ),
+                                              ),
+                                            );
+                                          } else {
+                                            final cartController =
+                                                Get.find<CartController>();
+                                            cartController.addToCart(
+                                              CartItem(
+                                                product: product,
+                                                quantity: 1,
+                                              ),
+                                            );
+                                            Get.snackbar(
+                                              'Ajouté au panier',
+                                              '${product.name} a été ajouté avec succès.',
+                                              backgroundColor: AppTheme
+                                                  .surfaceLight
+                                                  .withOpacity(0.95),
+                                              colorText: AppTheme.primaryBrown,
+                                              snackPosition:
+                                                  SnackPosition.BOTTOM,
+                                              margin: const EdgeInsets.all(16),
+                                              borderRadius: 10,
+                                              duration: const Duration(
+                                                seconds: 3,
+                                              ),
+                                              boxShadows:
+                                                  AppTheme.defaultShadow,
+                                            );
+                                          }
                                         },
                                         borderRadius: BorderRadius.circular(30),
                                         child: const Padding(
@@ -577,15 +624,59 @@ class _HomePageState extends State<HomePage> {
                                       borderRadius: BorderRadius.circular(30),
                                       child: InkWell(
                                         onTap: () {
-                                          if (favoritesController.isFavorite(
-                                            product,
-                                          )) {
-                                            favoritesController
-                                                .removeFromFavorites(product);
-                                          } else {
-                                            favoritesController.addToFavorites(
-                                              product,
+                                          if (authController
+                                                  .firebaseUser
+                                                  .value ==
+                                              null) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.error_outline,
+                                                      color: Colors.white,
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    Flexible(
+                                                      child: Text(
+                                                        'Veuillez vous connecter pour ajouter un produit au favoris',
+                                                        style: TextStyle(
+                                                          color: Colors.white,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                backgroundColor:
+                                                    const Color.fromARGB(
+                                                      255,
+                                                      241,
+                                                      130,
+                                                      96,
+                                                    ),
+                                                behavior:
+                                                    SnackBarBehavior.floating,
+                                                margin: const EdgeInsets.all(
+                                                  16,
+                                                ),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                ),
+                                              ),
                                             );
+                                          } else {
+                                            if (favoritesController.isFavorite(
+                                              product,
+                                            )) {
+                                              favoritesController
+                                                  .removeFromFavorites(product);
+                                            } else {
+                                              favoritesController
+                                                  .addToFavorites(product);
+                                            }
                                           }
                                         },
                                         borderRadius: BorderRadius.circular(30),
@@ -652,7 +743,7 @@ class _HomePageState extends State<HomePage> {
                     crossAxisCount: 2,
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
-                    childAspectRatio: 0.75,
+                    childAspectRatio: 0.7,
                   ),
                   itemBuilder: (context, index) {
                     final product = products[index];
@@ -762,26 +853,70 @@ class _HomePageState extends State<HomePage> {
                                     borderRadius: BorderRadius.circular(30),
                                     child: InkWell(
                                       onTap: () {
-                                        final cartController =
-                                            Get.find<CartController>();
-                                        cartController.addToCart(
-                                          CartItem(
-                                            product: product,
-                                            quantity: 1,
-                                          ),
-                                        );
-                                        Get.snackbar(
-                                          'Ajouté au panier',
-                                          '${product.name} a été ajouté avec succès.',
-                                          backgroundColor: AppTheme.surfaceLight
-                                              .withOpacity(0.95),
-                                          colorText: AppTheme.primaryBrown,
-                                          snackPosition: SnackPosition.BOTTOM,
-                                          margin: const EdgeInsets.all(16),
-                                          borderRadius: 10,
-                                          duration: const Duration(seconds: 3),
-                                          boxShadows: AppTheme.defaultShadow,
-                                        );
+                                        if (authController.firebaseUser.value ==
+                                            null) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.error_outline,
+                                                    color: Colors.white,
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Flexible(
+                                                    child: Text(
+                                                      'Veuillez vous connecter pour ajouter un produit au favoris',
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              backgroundColor:
+                                                  const Color.fromARGB(
+                                                    255,
+                                                    241,
+                                                    130,
+                                                    96,
+                                                  ),
+                                              behavior:
+                                                  SnackBarBehavior.floating,
+                                              margin: const EdgeInsets.all(16),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                            ),
+                                          );
+                                        } else {
+                                          final cartController =
+                                              Get.find<CartController>();
+                                          cartController.addToCart(
+                                            CartItem(
+                                              product: product,
+                                              quantity: 1,
+                                            ),
+                                          );
+                                          Get.snackbar(
+                                            'Ajouté au panier',
+                                            '${product.name} a été ajouté avec succès.',
+                                            backgroundColor: AppTheme
+                                                .surfaceLight
+                                                .withOpacity(0.95),
+                                            colorText: AppTheme.primaryBrown,
+                                            snackPosition: SnackPosition.BOTTOM,
+                                            margin: const EdgeInsets.all(16),
+                                            borderRadius: 10,
+                                            duration: const Duration(
+                                              seconds: 3,
+                                            ),
+                                            boxShadows: AppTheme.defaultShadow,
+                                          );
+                                        }
                                       },
                                       borderRadius: BorderRadius.circular(30),
                                       child: const Padding(
@@ -802,15 +937,56 @@ class _HomePageState extends State<HomePage> {
                                     borderRadius: BorderRadius.circular(30),
                                     child: InkWell(
                                       onTap: () {
-                                        if (favoritesController.isFavorite(
-                                          product,
-                                        )) {
-                                          favoritesController
-                                              .removeFromFavorites(product);
-                                        } else {
-                                          favoritesController.addToFavorites(
-                                            product,
+                                        if (authController.firebaseUser.value ==
+                                            null) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.error_outline,
+                                                    color: Colors.white,
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Flexible(
+                                                    child: Text(
+                                                      'Veuillez vous connecter pour ajouter un produit au favoris',
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              backgroundColor:
+                                                  const Color.fromARGB(
+                                                    255,
+                                                    241,
+                                                    130,
+                                                    96,
+                                                  ),
+                                              behavior:
+                                                  SnackBarBehavior.floating,
+                                              margin: const EdgeInsets.all(16),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                            ),
                                           );
+                                        } else {
+                                          if (favoritesController.isFavorite(
+                                            product,
+                                          )) {
+                                            favoritesController
+                                                .removeFromFavorites(product);
+                                          } else {
+                                            favoritesController.addToFavorites(
+                                              product,
+                                            );
+                                          }
                                         }
                                       },
                                       borderRadius: BorderRadius.circular(30),

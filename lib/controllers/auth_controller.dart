@@ -120,13 +120,30 @@ class AuthController extends GetxController {
 
       // La redirection sera gérée par _setInitialScreen
     } catch (e) {
-      Get.snackbar(
-        "Erreur de connexion",
-        e.toString(),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.shade100,
-        colorText: Colors.brown,
+      ScaffoldMessenger.of(Get.context!).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.white),
+              const SizedBox(width: 8),
+              Flexible(child: Text("Erreur de connexion$e")),
+            ],
+          ),
+          backgroundColor: const Color.fromARGB(255, 241, 130, 96),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
       );
+      // Get.snackbar(
+      //   "Erreur de connexion",
+      //   e.toString(),
+      //   snackPosition: SnackPosition.BOTTOM,
+      //   backgroundColor: Colors.red.shade100,
+      //   colorText: Colors.brown,
+      // );
     } finally {
       isLoading.value = false;
     }
@@ -201,12 +218,29 @@ class AuthController extends GetxController {
         );
       }
     } catch (e) {
-      Get.snackbar(
-        "Erreur d'inscription",
-        e.toString(),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.shade100,
-        colorText: Colors.brown,
+      // Get.snackbar(
+      //   "Erreur d'inscription",
+      //   e.toString(),
+      //   snackPosition: SnackPosition.BOTTOM,
+      //   backgroundColor: Colors.red.shade100,
+      //   colorText: Colors.brown,
+      // );
+      ScaffoldMessenger.of(Get.context!).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.white),
+              const SizedBox(width: 8),
+              Flexible(child: Text("Erreur d'inscription$e")),
+            ],
+          ),
+          backgroundColor: const Color.fromARGB(255, 241, 130, 96),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
       );
     } finally {
       isLoading.value = false;

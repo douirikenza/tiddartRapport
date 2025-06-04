@@ -1,151 +1,203 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/cart_controller.dart';
+import '../../controllers/auth_controller.dart';
 import '../../models/cart_item_model.dart';
 import '../../theme/app_theme.dart';
+import '../../routes/app_routes.dart';
 import 'cart_payment_choice_page.dart';
 
-class CartPage extends StatelessWidget {
-  CartPage({super.key});
+class CartPage extends StatefulWidget {
+  const CartPage({super.key});
 
+  @override
+  State<CartPage> createState() => _CartPageState();
+}
+
+class _CartPageState extends State<CartPage> {
   final CartController cartController = Get.find();
+  final AuthController authController = Get.find<AuthController>();
+
+  @override
+  void initState() {
+    super.initState();
+    if (authController.firebaseUser.value == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Get.offAllNamed(AppRoutes.login);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundLight,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        title: Text(
-          'Mon Panier',
-          style: AppTheme.textTheme.headlineMedium?.copyWith(
-            color: AppTheme.primaryBrown,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        iconTheme: IconThemeData(color: AppTheme.primaryBrown),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Obx(() {
-              if (cartController.cartItems.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.shopping_cart_outlined,
-                        size: 80,
-                        color: AppTheme.primaryBrown.withOpacity(0.3),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Votre panier est vide',
-                        style: AppTheme.textTheme.titleLarge?.copyWith(
-                          color: AppTheme.primaryBrown.withOpacity(0.7),
-                        ),
-                      ),
-                    ],
+    return Obx(() {
+      final user = authController.firebaseUser.value;
+
+      if (user == null) {
+        return Scaffold(
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.shopping_cart_outlined,
+                  size: 100,
+                  color: AppTheme.primaryBrown.withOpacity(0.5),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Connectez-vous pour voir votre panier',
+                  style: AppTheme.textTheme.titleLarge?.copyWith(
+                    color: AppTheme.primaryBrown,
                   ),
-                );
-              }
-              return ListView.separated(
-                padding: const EdgeInsets.all(16),
-                itemCount: cartController.cartItems.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 16),
-                itemBuilder: (context, index) {
-                  final item = cartController.cartItems[index];
-                  return _buildCartItem(context, item, index);
-                },
-              );
-            }),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceLight,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(30),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.primaryBrown.withOpacity(0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, -5),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () => Get.offAllNamed(AppRoutes.login),
+                  style: AppTheme.primaryButtonStyle,
+                  child: const Text('Se connecter'),
                 ),
               ],
             ),
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Total',
-                      style: AppTheme.textTheme.titleLarge?.copyWith(
-                        color: AppTheme.primaryBrown,
-                        fontWeight: FontWeight.bold,
-                      ),
+          ),
+        );
+      }
+
+      return Scaffold(
+        backgroundColor: AppTheme.backgroundLight,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          title: Text(
+            'Mon Panier',
+            style: AppTheme.textTheme.headlineMedium?.copyWith(
+              color: AppTheme.primaryBrown,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          iconTheme: IconThemeData(color: AppTheme.primaryBrown),
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: Obx(() {
+                if (cartController.cartItems.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.shopping_cart_outlined,
+                          size: 80,
+                          color: AppTheme.primaryBrown.withOpacity(0.3),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Votre panier est vide',
+                          style: AppTheme.textTheme.titleLarge?.copyWith(
+                            color: AppTheme.primaryBrown.withOpacity(0.7),
+                          ),
+                        ),
+                      ],
                     ),
-                    Obx(
-                      () => Text(
-                        '${cartController.total.toStringAsFixed(2)} TND',
+                  );
+                }
+                return ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: cartController.cartItems.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 16),
+                  itemBuilder: (context, index) {
+                    final item = cartController.cartItems[index];
+                    return _buildCartItem(context, item, index);
+                  },
+                );
+              }),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceLight,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(30),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryBrown.withOpacity(0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, -5),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Total',
                         style: AppTheme.textTheme.titleLarge?.copyWith(
                           color: AppTheme.primaryBrown,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (cartController.cartItems.isNotEmpty) {
-                        Get.to(
-                          () => CartPaymentChoicePage(
-                            totalAmount: cartController.total,
-                            cartItems: cartController.cartItems,
-                          ),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryBrown,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.shopping_cart_checkout, size: 24),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Acheter maintenant',
-                          style: AppTheme.textTheme.titleMedium?.copyWith(
-                            color: Colors.white,
+                      Obx(
+                        () => Text(
+                          '${cartController.total.toStringAsFixed(2)} TND',
+                          style: AppTheme.textTheme.titleLarge?.copyWith(
+                            color: AppTheme.primaryBrown,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (cartController.cartItems.isNotEmpty) {
+                          Get.to(
+                            () => CartPaymentChoicePage(
+                              totalAmount: cartController.total,
+                              cartItems: cartController.cartItems,
+                            ),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryBrown,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.shopping_cart_checkout, size: 24),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Acheter maintenant',
+                            style: AppTheme.textTheme.titleMedium?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildCartItem(BuildContext context, CartItem item, int index) {
