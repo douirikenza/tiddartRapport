@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../controllers/auth_controller.dart';
+import '../auth_controller.dart';
 
 class ArtisanDashboardController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

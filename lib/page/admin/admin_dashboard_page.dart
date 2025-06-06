@@ -6,7 +6,7 @@ import 'artisan_management_page.dart';
 import 'admin_statistics_page.dart';
 import 'admin_settings_page.dart';
 import 'admin_notifications_page.dart';
-import '../../controllers/admin_dashboard_controller.dart';
+import '../../controllers/admin/admin_dashboard_controller.dart';
 import '../../controllers/auth_controller.dart';
 import '../../styles/app_theme.dart';
 

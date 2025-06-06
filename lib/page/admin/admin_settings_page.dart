@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../theme/app_theme.dart';
-import '../../controllers/admin_settings_controller.dart';
+import '../../controllers/admin/admin_settings_controller.dart';
 import '../../routes/app_routes.dart';
 
 class AdminSettingsPage extends StatelessWidget {

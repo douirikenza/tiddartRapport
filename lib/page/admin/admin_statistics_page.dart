@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../controllers/admin_dashboard_controller.dart';
+import '../../controllers/admin/admin_dashboard_controller.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../theme/app_theme.dart';
 
@@ -262,15 +262,20 @@ class AdminStatisticsPage extends StatelessWidget {
                     showTitles: true,
                     getTitlesWidget: (value, meta) {
                       if (value.toInt() >= 0 && value.toInt() < keys.length) {
+                        if (value.toInt() % 2 != 0)
+                          return const SizedBox.shrink();
                         final date = keys[value.toInt()];
                         return Padding(
                           padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                            date.substring(5),
-                            style: TextStyle(
-                              color: AppTheme.primaryBrown,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                          child: Transform.rotate(
+                            angle: -0.5,
+                            child: Text(
+                              date.substring(5),
+                              style: TextStyle(
+                                color: AppTheme.primaryBrown,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                         );

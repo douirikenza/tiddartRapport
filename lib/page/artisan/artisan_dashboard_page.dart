@@ -10,7 +10,7 @@ import 'package:flutter/services.dart';
 import 'artisan_chat_page.dart';
 import 'artisan_conversations_list.dart';
 import 'category_products_page.dart';
-import '../../controllers/artisan_dashboard_controller.dart';
+import '../../controllers/admin/artisan_dashboard_controller.dart';
 import '../../controllers/auth_controller.dart';
 import '../../controllers/order_controller.dart';
 import 'package:fl_chart/fl_chart.dart';

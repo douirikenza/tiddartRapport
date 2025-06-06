@@ -182,26 +182,7 @@ class AuthController extends GetxController {
         await _auth.signOut();
         // Redirection vers la page de connexion avec un message
         Get.offAllNamed(AppRoutes.login);
-        // ScaffoldMessenger.of(Get.context!).showSnackBar(
-        //   SnackBar(
-        //     content: Row(
-        //       children: [
-        //         Icon(Icons.error_outline, color: Colors.white),
-        //         const SizedBox(width: 8),
-        //         Flexible(
-        //           child: Text(
-        //             "Inscription réussie, \nVotre compte artisan est en attente d'approbation par l'administrateur.",
-        //             style: TextStyle(color: Colors.orange.shade900),
-        //           ),
-        //         ),
-        //       ],
-        //     ),
-
-        //     backgroundColor: Colors.orange.shade100,
-
-        //     duration: const Duration(seconds: 5),
-        //   ),
-        // );
+      
       } else {
         // Pour les clients, redirection directe vers la page principale
         Get.offAllNamed(AppRoutes.mainPage);
