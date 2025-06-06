@@ -5,8 +5,10 @@ import 'category_management_page.dart';
 import 'artisan_management_page.dart';
 import 'admin_statistics_page.dart';
 import 'admin_settings_page.dart';
+import 'admin_notifications_page.dart';
 import '../../controllers/admin_dashboard_controller.dart';
 import '../../controllers/auth_controller.dart';
+import '../../styles/app_theme.dart';
 
 class AdminDashboardPage extends StatelessWidget {
   final String adminId;
@@ -29,6 +31,12 @@ class AdminDashboardPage extends StatelessWidget {
           style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications, color: Colors.black87),
+            onPressed: () {
+              Get.to(() => AdminNotificationsPage(adminId: adminId));
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.black87),
             onPressed: () async {
@@ -69,33 +77,30 @@ class AdminDashboardPage extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Obx(
-                          () => _buildStatCard(
+                          () => _buildStatsCard(
                             'Total Artisans',
                             controller.totalArtisans.value.toString(),
                             Icons.people,
-                            Colors.blue,
                           ),
                         ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: Obx(
-                          () => _buildStatCard(
+                          () => _buildStatsCard(
                             'Catégories',
                             controller.totalCategories.value.toString(),
                             Icons.category,
-                            Colors.green,
                           ),
                         ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: Obx(
-                          () => _buildStatCard(
+                          () => _buildStatsCard(
                             'Commandes',
                             controller.totalCommandes.value.toString(),
                             Icons.shopping_cart,
-                            Colors.orange,
                           ),
                         ),
                       ),
@@ -160,45 +165,38 @@ class AdminDashboardPage extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.1),
-              spreadRadius: 1,
-              blurRadius: 10,
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
-            ),
-          ],
-        ),
+  Widget _buildStatsCard(String title, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: AppTheme.primaryBrown, size: 24),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: TextStyle(color: Colors.grey[600], fontSize: 14),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'bindings/app_binding.dart';
 import 'routes/app_routes.dart';
 import 'controllers/category_controller.dart';
@@ -13,6 +14,12 @@ void main() async {
 
   // 🔥 Initialiser Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // 🔒 Initialiser Firebase App Check en mode debug
+  await FirebaseAppCheck.instance.activate(
+    androidProvider: AndroidProvider.debug,
+    appleProvider: AppleProvider.debug,
+  );
 
   Get.put(CategoryController(), permanent: true);
   Get.put(MessageController());
