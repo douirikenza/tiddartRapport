@@ -167,36 +167,36 @@ class AdminDashboardPage extends StatelessWidget {
 
   Widget _buildStatsCard(String title, String value, IconData icon) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
         borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
+          boxShadow: [
+            BoxShadow(
             color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 10,
+              spreadRadius: 1,
+              blurRadius: 10,
             offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
+            ),
+          ],
+        ),
+        child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [
+          children: [
           Icon(icon, color: AppTheme.primaryBrown, size: 24),
-          const SizedBox(height: 8),
-          Text(
+            const SizedBox(height: 8),
+            Text(
             title,
             style: TextStyle(color: Colors.grey[600], fontSize: 14),
             textAlign: TextAlign.center,
-          ),
+              ),
           const SizedBox(height: 4),
-          Text(
+            Text(
             value,
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
-          ),
-        ],
+            ),
+          ],
       ),
     );
   }
