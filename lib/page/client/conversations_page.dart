@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/message.dart';
 import '../../services/message_service.dart';
-import 'chat_page.dart';
+
 import '../../theme/app_theme.dart';
 
 class ConversationsPage extends StatelessWidget {

@@ -47,15 +47,8 @@ class _ArtisanConversationsListState extends State<ArtisanConversationsList> {
         ),
       ),
       body: StreamBuilder<List<Message>>(
-        stream: _messageController.getMessages(widget.artisanId),
+        stream: _messageController.getConversations(widget.artisanId, true),
         builder: (context, snapshot) {
-          print('État de la connexion: ${snapshot.connectionState}');
-          print('Données: ${snapshot.data}');
-          if (snapshot.hasError) {
-            print('Erreur détaillée: ${snapshot.error}');
-            print('Stack trace: ${snapshot.stackTrace}');
-          }
-
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
               child: CircularProgressIndicator(
@@ -78,7 +71,7 @@ class _ArtisanConversationsListState extends State<ArtisanConversationsList> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Erreur de chargement des messages: ${snapshot.error}',
+                    'Erreur de chargement des messages',
                     style: TextStyle(
                       color: AppTheme.primaryBrown,
                       fontSize: 16,
@@ -90,8 +83,8 @@ class _ArtisanConversationsListState extends State<ArtisanConversationsList> {
             );
           }
 
-          final messages = snapshot.data ?? [];
-          if (messages.isEmpty) {
+          final conversations = snapshot.data ?? [];
+          if (conversations.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -123,27 +116,12 @@ class _ArtisanConversationsListState extends State<ArtisanConversationsList> {
             );
           }
 
-          // Grouper les messages par expéditeur
-          final Map<String, Message> latestMessages = {};
-          for (var message in messages) {
-            final senderId = message.senderId;
-            if (!latestMessages.containsKey(senderId) ||
-                message.timestamp.isAfter(
-                  latestMessages[senderId]!.timestamp,
-                )) {
-              latestMessages[senderId] = message;
-            }
-          }
-
           return ListView.builder(
             padding: const EdgeInsets.all(12),
-            itemCount: latestMessages.length,
+            itemCount: conversations.length,
             itemBuilder: (context, index) {
-              final message = latestMessages.values.toList()[index];
-              final unreadCount =
-                  messages
-                      .where((m) => m.senderId == message.senderId && !m.isRead)
-                      .length;
+              final message = conversations[index];
+              final unreadCount = message.isRead ? 0 : 1;
 
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
@@ -268,14 +246,6 @@ class _ArtisanConversationsListState extends State<ArtisanConversationsList> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppTheme.primaryBrown,
-        onPressed: () async {
-          await _messageController.addTestMessage(widget.artisanId);
-          _showMessage('Message de test ajouté', false);
-        },
-        child: const Icon(Icons.add_comment, color: Colors.white),
-      ),
     );
   }
 
@@ -292,27 +262,5 @@ class _ArtisanConversationsListState extends State<ArtisanConversationsList> {
     } else {
       return 'À l\'instant';
     }
-  }
-
-  void _showMessage(String message, bool isError) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(
-              isError ? Icons.error_outline : Icons.check_circle_outline,
-              color: Colors.white,
-            ),
-            const SizedBox(width: 8),
-            Flexible(child: Text(message)),
-          ],
-        ),
-        backgroundColor: isError ? Colors.red : Colors.green,
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
   }
 }

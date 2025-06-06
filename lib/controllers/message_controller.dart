@@ -36,91 +36,106 @@ class MessageController extends GetxController {
     }
   }
 
-  // Obtenir tous les messages pour un artisan
-  Stream<List<Message>> getMessages(String artisanId) {
-    print('Récupération des messages pour artisanId: $artisanId');
+  // Envoyer un nouveau message
+  Future<void> sendMessage({
+    required String senderId,
+    required String receiverId,
+    required String content,
+    required String senderName,
+    String? senderImage,
+  }) async {
     try {
-      return _firestore
-          .collection('messages')
-          .where('receiverId', isEqualTo: artisanId)
-          .snapshots()
-          .map((snapshot) {
-            print('Snapshot reçu: ${snapshot.docs.length} documents');
-            final messages = snapshot.docs.map((doc) {
-              print('Document ID: ${doc.id}');
-              print('Document data: ${doc.data()}');
-              return Message.fromFirestore(doc);
-            }).toList();
-            messages.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-            return messages;
-          })
-          .handleError((error) {
-            print('Erreur dans le stream: $error');
-            throw error;
-          });
+      final message = {
+        'senderId': senderId,
+        'receiverId': receiverId,
+        'content': content,
+        'timestamp': Timestamp.now(),
+        'isRead': false,
+        'senderName': senderName,
+        'senderImage': senderImage,
+      };
+
+      await _firestore.collection('messages').add(message);
     } catch (e) {
-      print('Erreur lors de la création du stream: $e');
+      print('Erreur lors de l\'envoi du message: $e');
       rethrow;
     }
   }
 
-  // Obtenir les conversations uniques pour un artisan
-  Stream<List<Message>> getConversations(String artisanId) {
+  // Obtenir les messages entre deux utilisateurs
+  Stream<List<Message>> getMessagesBetweenUsers(
+    String userId1,
+    String userId2,
+  ) {
     return _firestore
         .collection('messages')
-        .where('receiverId', isEqualTo: artisanId)
+        .where('senderId', whereIn: [userId1, userId2])
+        .where('receiverId', whereIn: [userId1, userId2])
         .orderBy('timestamp', descending: true)
         .snapshots()
         .map((snapshot) {
-          final allMessages = snapshot.docs.map((doc) => Message.fromFirestore(doc)).toList();
-          
-          // Grouper par expéditeur et prendre le dernier message
+          return snapshot.docs
+              .map((doc) => Message.fromFirestore(doc))
+              .toList();
+        });
+  }
+
+  // Obtenir les conversations uniques pour un utilisateur
+  Stream<List<Message>> getConversations(String userId, bool isArtisan) {
+    return _firestore
+        .collection('messages')
+        .where(isArtisan ? 'receiverId' : 'senderId', isEqualTo: userId)
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          final allMessages =
+              snapshot.docs.map((doc) => Message.fromFirestore(doc)).toList();
+
+          // Grouper par expéditeur/destinataire et prendre le dernier message
           final Map<String, Message> latestMessages = {};
           for (var message in allMessages) {
-            if (!latestMessages.containsKey(message.senderId) ||
-                message.timestamp.isAfter(latestMessages[message.senderId]!.timestamp)) {
-              latestMessages[message.senderId] = message;
+            final otherUserId =
+                isArtisan ? message.senderId : message.receiverId;
+            if (!latestMessages.containsKey(otherUserId) ||
+                message.timestamp.isAfter(
+                  latestMessages[otherUserId]!.timestamp,
+                )) {
+              latestMessages[otherUserId] = message;
             }
           }
-          
-          print('Conversations trouvées: ${latestMessages.length}'); // Debug log
+
           return latestMessages.values.toList();
         });
   }
 
   // Obtenir le nombre de messages non lus
-  Stream<int> getUnreadCount(String artisanId) {
-    print('Récupération du nombre de messages non lus pour artisanId: $artisanId');
+  Stream<int> getUnreadCount(String userId) {
     return _firestore
         .collection('messages')
-        .where('receiverId', isEqualTo: artisanId)
+        .where('receiverId', isEqualTo: userId)
         .where('isRead', isEqualTo: false)
         .snapshots()
         .map((snapshot) => snapshot.docs.length);
   }
 
-  // Marquer un message comme lu
-  Future<void> markAsRead(String messageId) async {
-    try {
-      print('Marquage du message comme lu: $messageId');
-      await _firestore.collection('messages').doc(messageId).update({
-        'isRead': true,
-      });
-      print('Message marqué comme lu avec succès');
-    } catch (e) {
-      print('Erreur lors du marquage du message comme lu: $e');
-      rethrow;
-    }
-  }
+  // Marquer tous les messages comme lus
+  Future<void> markMessagesAsRead(
+    String currentUserId,
+    String otherUserId,
+  ) async {
+    final messages =
+        await _firestore
+            .collection('messages')
+            .where('senderId', isEqualTo: otherUserId)
+            .where('receiverId', isEqualTo: currentUserId)
+            .where('isRead', isEqualTo: false)
+            .get();
 
-  // Envoyer un nouveau message
-  Future<void> sendMessage(Message message) async {
-    try {
-      await _firestore.collection('messages').add(message.toMap());
-    } catch (e) {
-      print('Erreur lors de l\'envoi du message: $e');
-      rethrow;
+    final batch = _firestore.batch();
+    for (var doc in messages.docs) {
+      batch.update(doc.reference, {'isRead': true});
     }
+    await batch.commit();
   }
 
   // Supprimer un message
@@ -132,4 +147,4 @@ class MessageController extends GetxController {
       rethrow;
     }
   }
-} 
+}

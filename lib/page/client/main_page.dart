@@ -1,3 +1,4 @@
+import 'package:Tiddart/page/client/chat_list_page.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../theme/app_theme.dart';
@@ -12,6 +13,7 @@ class MainPage extends StatelessWidget {
     const HomePage(),
     FavoritesPage(),
     CartPage(),
+    const ChatListPage(),
     const ProfilePage(),
   ];
 
@@ -45,9 +47,7 @@ class MainPage extends StatelessWidget {
               fontWeight: FontWeight.bold,
               fontSize: 12,
             ),
-            unselectedLabelStyle: const TextStyle(
-              fontSize: 12,
-            ),
+            unselectedLabelStyle: const TextStyle(fontSize: 12),
             items: [
               BottomNavigationBarItem(
                 icon: Icon(Icons.home_outlined),
@@ -81,10 +81,27 @@ class MainPage extends StatelessWidget {
                     color: AppTheme.primaryBrown.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
-                  child:
-                      Icon(Icons.shopping_cart, color: AppTheme.primaryBrown),
+                  child: Icon(
+                    Icons.shopping_cart,
+                    color: AppTheme.primaryBrown,
+                  ),
                 ),
                 label: 'Panier',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.chat_outlined),
+                activeIcon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryBrown.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.shopping_cart,
+                    color: AppTheme.primaryBrown,
+                  ),
+                ),
+                label: 'Messages',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.person_outline),

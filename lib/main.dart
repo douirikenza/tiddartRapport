@@ -1,3 +1,4 @@
+import 'package:Tiddart/controllers/message_controller.dart';
 import 'package:Tiddart/firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -14,6 +15,7 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   Get.put(CategoryController(), permanent: true);
+  Get.put(MessageController());
 
   runApp(const TiddartApp());
 }

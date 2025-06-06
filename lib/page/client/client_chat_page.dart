@@ -8,23 +8,23 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 import '../../controllers/auth_controller.dart';
 
-class ArtisanChatPage extends StatefulWidget {
-  final String artisanId;
+class ClientChatPage extends StatefulWidget {
   final String clientId;
-  final String clientName;
+  final String artisanId;
+  final String artisanName;
 
-  const ArtisanChatPage({
+  const ClientChatPage({
     Key? key,
-    required this.artisanId,
     required this.clientId,
-    required this.clientName,
+    required this.artisanId,
+    required this.artisanName,
   }) : super(key: key);
 
   @override
-  State<ArtisanChatPage> createState() => _ArtisanChatPageState();
+  State<ClientChatPage> createState() => _ClientChatPageState();
 }
 
-class _ArtisanChatPageState extends State<ArtisanChatPage> {
+class _ClientChatPageState extends State<ClientChatPage> {
   final MessageController _messageController = Get.find<MessageController>();
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -36,7 +36,7 @@ class _ArtisanChatPageState extends State<ArtisanChatPage> {
   void initState() {
     super.initState();
     // Marquer les messages comme lus lors de l'ouverture de la conversation
-    _messageController.markMessagesAsRead(widget.artisanId, widget.clientId);
+    _messageController.markMessagesAsRead(widget.clientId, widget.artisanId);
   }
 
   @override
@@ -51,12 +51,12 @@ class _ArtisanChatPageState extends State<ArtisanChatPage> {
 
     try {
       final userData = await _authController.getCurrentUserData();
-      final artisanName = userData?['name'] ?? 'Artisan';
+      final clientName = userData?['name'] ?? 'Client';
       await _messageController.sendMessage(
-        senderId: widget.artisanId,
-        receiverId: widget.clientId,
+        senderId: widget.clientId,
+        receiverId: widget.artisanId,
         content: text.trim(),
-        senderName: artisanName,
+        senderName: clientName,
         senderImage: null,
       );
 
@@ -85,12 +85,12 @@ class _ArtisanChatPageState extends State<ArtisanChatPage> {
       TaskSnapshot snapshot = await uploadTask;
       String imageUrl = await snapshot.ref.getDownloadURL();
       final userData = await _authController.getCurrentUserData();
-      final artisanName = userData?['name'] ?? 'Artisan';
+      final clientName = userData?['name'] ?? 'Client';
       await _messageController.sendMessage(
-        senderId: widget.artisanId,
-        receiverId: widget.clientId,
+        senderId: widget.clientId,
+        receiverId: widget.artisanId,
         content: imageUrl,
-        senderName: artisanName,
+        senderName: clientName,
         senderImage: null,
       );
     }
@@ -177,7 +177,7 @@ class _ArtisanChatPageState extends State<ArtisanChatPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              widget.clientName,
+              widget.artisanName,
               style: TextStyle(
                 color: AppTheme.primaryBrown,
                 fontWeight: FontWeight.bold,
@@ -207,8 +207,8 @@ class _ArtisanChatPageState extends State<ArtisanChatPage> {
           Expanded(
             child: StreamBuilder<List<Message>>(
               stream: _messageController.getMessagesBetweenUsers(
-                widget.artisanId,
                 widget.clientId,
+                widget.artisanId,
               ),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -263,7 +263,7 @@ class _ArtisanChatPageState extends State<ArtisanChatPage> {
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
                     final message = messages[index];
-                    final bool isMe = message.senderId == widget.artisanId;
+                    final bool isMe = message.senderId == widget.clientId;
 
                     return GestureDetector(
                       onLongPress:

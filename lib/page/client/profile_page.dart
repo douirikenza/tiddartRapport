@@ -10,7 +10,7 @@ import '../../controllers/profile_controller.dart';
 import '../../controllers/auth_controller.dart';
 import '../../models/product_model.dart';
 import '../../routes/app_routes.dart';
-import 'chat_page.dart';
+
 import 'chat_list_page.dart';
 
 class ProfilePage extends StatefulWidget {

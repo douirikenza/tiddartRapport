@@ -245,7 +245,7 @@ class _ArtisanProductManagementPageState
                         padding: const EdgeInsets.all(16),
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: crossAxisCount,
-                          childAspectRatio: 0.62,
+                          childAspectRatio: 0.55,
                           crossAxisSpacing: 16,
                           mainAxisSpacing: 16,
                         ),
