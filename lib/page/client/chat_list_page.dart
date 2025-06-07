@@ -20,13 +20,19 @@ class _ChatListPageState extends State<ChatListPage> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   final AuthController _authController = Get.find<AuthController>();
-  final MessageController _messageController = Get.find<MessageController>(); 
+  final MessageController _messageController = Get.find<MessageController>();
+  final AuthController authController = Get.find<AuthController>();
   List<Map<String, dynamic>> _filteredArtisans = [];
   List<Map<String, dynamic>> _allArtisans = [];
 
   @override
   void initState() {
     super.initState();
+    if (authController.firebaseUser.value == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Get.offAllNamed(AppRoutes.login);
+      });
+    }
     _searchController.addListener(_onSearchChanged);
     _loadArtisans();
   }
@@ -79,105 +85,140 @@ class _ChatListPageState extends State<ChatListPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundLight,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title:
-            _isSearching
-                ? TextField(
-                  controller: _searchController,
-                  focusNode: _searchFocusNode,
-                  decoration: InputDecoration(
-                    hintText: 'Rechercher un artisan...',
-                    hintStyle: TextStyle(
-                      color: AppTheme.primaryBrown.withOpacity(0.5),
+    final user = authController.firebaseUser.value;
+
+    if (user == null) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.chat_outlined,
+                size: 100,
+                color: AppTheme.primaryBrown.withOpacity(0.5),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Connectez-vous pour voir vos favoris',
+                style: AppTheme.textTheme.titleLarge?.copyWith(
+                  color: AppTheme.primaryBrown,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () => Get.offAllNamed(AppRoutes.login),
+                style: AppTheme.primaryButtonStyle,
+                child: const Text('Se connecter'),
+              ),
+            ],
+          ),
+        ),
+      );
+    } else {
+      return Scaffold(
+        backgroundColor: AppTheme.backgroundLight,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title:
+              _isSearching
+                  ? TextField(
+                    controller: _searchController,
+                    focusNode: _searchFocusNode,
+                    decoration: InputDecoration(
+                      hintText: 'Rechercher un artisan...',
+                      hintStyle: TextStyle(
+                        color: AppTheme.primaryBrown.withOpacity(0.5),
+                        fontSize: 16,
+                      ),
+                      border: InputBorder.none,
+                    ),
+                    style: TextStyle(
+                      color: AppTheme.primaryBrown,
                       fontSize: 16,
                     ),
-                    border: InputBorder.none,
+                    autofocus: true,
+                  )
+                  : Text(
+                    'Messages',
+                    style: AppTheme.textTheme.titleLarge?.copyWith(
+                      color: AppTheme.primaryBrown,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  style: TextStyle(color: AppTheme.primaryBrown, fontSize: 16),
-                  autofocus: true,
-                )
-                : Text(
-                  'Messages',
-                  style: AppTheme.textTheme.titleLarge?.copyWith(
-                    color: AppTheme.primaryBrown,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-        centerTitle: true,
+          centerTitle: true,
 
-        actions: [
-          IconButton(
-            icon: Icon(
-              _isSearching ? Icons.close : Icons.search,
-              color: AppTheme.primaryBrown,
+          actions: [
+            IconButton(
+              icon: Icon(
+                _isSearching ? Icons.close : Icons.search,
+                color: AppTheme.primaryBrown,
+              ),
+              onPressed: () {
+                setState(() {
+                  _isSearching = !_isSearching;
+                  if (!_isSearching) {
+                    _searchController.clear();
+                    _filteredArtisans = List.from(_allArtisans);
+                  } else {
+                    _searchFocusNode.requestFocus();
+                  }
+                });
+              },
             ),
-            onPressed: () {
-              setState(() {
-                _isSearching = !_isSearching;
-                if (!_isSearching) {
-                  _searchController.clear();
-                  _filteredArtisans = List.from(_allArtisans);
-                } else {
-                  _searchFocusNode.requestFocus();
-                }
-              });
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF7E6),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.orange.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.info_outline, color: Colors.orange[700], size: 20),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Pour votre sécurité, veuillez utiliser uniquement la messagerie de Tiddart pour communiquer avec les artisans.',
-                    style: TextStyle(
-                      color: Colors.orange[900],
-                      fontSize: 12,
-                      height: 1.4,
+          ],
+        ),
+        body: Column(
+          children: [
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF7E6),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.orange.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, color: Colors.orange[700], size: 20),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Pour votre sécurité, veuillez utiliser uniquement la messagerie de Tiddart pour communiquer avec les artisans.',
+                      style: TextStyle(
+                        color: Colors.orange[900],
+                        fontSize: 12,
+                        height: 1.4,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child:
-                _filteredArtisans.isEmpty
-                    ? _buildEmptyState()
-                    : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _filteredArtisans.length,
-                      itemBuilder: (context, index) {
-                        final artisan = _filteredArtisans[index];
-                        return _buildArtisanCard(artisan, context);
-                      },
-                    ),
-          ),
-        ],
-      ),
-    );
+            Expanded(
+              child:
+                  _filteredArtisans.isEmpty
+                      ? _buildEmptyState()
+                      : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _filteredArtisans.length,
+                        itemBuilder: (context, index) {
+                          final artisan = _filteredArtisans[index];
+                          return _buildArtisanCard(artisan, context);
+                        },
+                      ),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   Widget _buildEmptyState() {
